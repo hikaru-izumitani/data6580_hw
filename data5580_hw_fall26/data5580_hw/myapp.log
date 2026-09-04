@@ -1,0 +1,48 @@
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:root:user created, 0e187ac86ee74c54aad2c5ebdaf17247 for richard.woolston@usu.edu
+INFO:werkzeug:127.0.0.1 - - [15/Jan/2026 15:48:26] "POST /user HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in 'C:\\Users\\rcwoo\\PycharmProjects\\data5580_hw\\data5580_hw\\app.py', reloading
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:werkzeug: * Detected change in 'C:\\Users\\rcwoo\\PycharmProjects\\data5580_hw\\data5580_hw\\app.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:root:user created, e1d4bd906a534b6c927c0b46258ef040 for richard.woolston@usu.edu
+INFO:werkzeug:127.0.0.1 - - [15/Jan/2026 15:50:38] "POST /user HTTP/1.1" 200 -
+DEBUG:__main__:Got user_id 75e5ac8e232b44a4bc402670180b6df1
+INFO:werkzeug:127.0.0.1 - - [15/Jan/2026 15:50:44] "[35m[1mGET /user/75e5ac8e232b44a4bc402670180b6df1 HTTP/1.1[0m" 500 -
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:werkzeug: * Detected change in 'C:\\Users\\rcwoo\\PycharmProjects\\data5580_hw\\data5580_hw\\app.py', reloading
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:werkzeug: * Detected change in 'C:\\Users\\rcwoo\\PycharmProjects\\data5580_hw\\data5580_hw\\app.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 427-020-432
+INFO:root:user created, f91560b613bb4fd28e34525ce497220d for richard.woolston@usu.edu
+INFO:werkzeug:127.0.0.1 - - [15/Jan/2026 15:53:06] "POST /user HTTP/1.1" 200 -
+DEBUG:__main__:Got user_id 75e5ac8e232b44a4bc402670180b6df1
+INFO:werkzeug:127.0.0.1 - - [15/Jan/2026 15:53:09] "[33mGET /user/75e5ac8e232b44a4bc402670180b6df1 HTTP/1.1[0m" 404 -
+INFO:werkzeug: * Detected change in 'C:\\Users\\rcwoo\\PycharmProjects\\data5580_hw\\data5580_hw\\app.py', reloading
+INFO:werkzeug: * Restarting with stat

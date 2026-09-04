@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/0/b88cbbd03c8948f6953f75f49e5ca3bd/artifacts
+end_time: 1769558152557
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b88cbbd03c8948f6953f75f49e5ca3bd
+run_name: aged-cub-382
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1769558146022
+status: 4
+tags: []
+user_id: rcwoo
