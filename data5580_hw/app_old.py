@@ -1,8 +1,5 @@
 from flask import Flask, jsonify, request
 
-from data5580_hw.routes import init_blueprints
-from data5580_hw.services.database.database_client import init_db
-
 # $body = @{
 #     a = 5
 #     b = 7
@@ -17,17 +14,20 @@ from data5580_hw.services.database.database_client import init_db
 def create_app():
     app = Flask(__name__)
 
-    from data5580_hw.config import Config
+    @app.route("/", methods=["GET"])
+    def home():
+        return jsonify({"message": "Hello, Flask!"})
 
-    app.config.from_object(Config)
+    @app.route("/add", methods=["POST"])
+    def add():
+        data = request.get_json()
+        a = data.get("a")
+        b = data.get("b")
 
-    init_db(app)
+        if a is None or b is None:
+            return jsonify({"error": "Missing values"}), 400
 
-    @app.route('/')
-    def index():
-        return jsonify({'message': 'Hello World!'})
-
-    init_blueprints(app)
+        return jsonify({"result": a + b})
 
     return app
 
