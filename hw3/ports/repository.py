@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class UserRepository(ABC):
+class UserRepositoryPort(ABC):
     @abstractmethod
     def get_all(self):
         pass
