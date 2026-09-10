@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
@@ -11,8 +11,8 @@ class User(object):
     id: str
     name: str
     email: str
-    updated: Optional[datetime] = None
-    created: Optional[datetime] = None
+    updated: Optional[datetime] = field(default_factory=datetime.now)
+    created: Optional[datetime] = field(default_factory=datetime.now)
 
     def to_user_sql(self) -> UserSQL:
 
