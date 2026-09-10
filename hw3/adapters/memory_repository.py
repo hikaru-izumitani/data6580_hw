@@ -41,7 +41,7 @@ class InMemoryUserRepository(UserRepositoryPort):
             user["email"] = email
         return user
 
-    def delete_user(self, user_id: int):
+    def delete(self, user_id: int):
         user = self.get_by_id(user_id)
         if user:
             self.users.remove(user)

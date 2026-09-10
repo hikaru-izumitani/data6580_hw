@@ -16,12 +16,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
 # 2. Prometheus 監視の初期化 (/metrics エンドポイントが自動生成される)
 metrics = PrometheusMetrics(app)
 
 # 依存性の注入 (DI)
 repo = InMemoryUserRepository()
+users = repo.users
 user_service = UserService(repo)
 
 @app.route("/users", methods=["POST"])
