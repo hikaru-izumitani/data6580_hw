@@ -1,5 +1,16 @@
 from flask import Flask, jsonify, request
 
+# $body = @{
+#     a = 5
+#     b = 7
+# } | ConvertTo-Json
+#
+# Invoke-RestMethod `
+#     -Uri "http://localhost:5000/add" `
+#     -Method Post `
+#     -ContentType "application/json" `
+#     -Body $body
+
 def create_app():
     app = Flask(__name__)
 
