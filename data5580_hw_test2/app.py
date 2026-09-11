@@ -17,7 +17,7 @@ from data5580_hw.services.database.database_client import init_db
 def create_app():
     app = Flask(__name__)
 
-    from data5580_hw.config import Config
+    from config import Config
 
     app.config.from_object(Config)
 
