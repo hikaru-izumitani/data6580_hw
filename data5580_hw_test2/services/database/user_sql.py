@@ -12,4 +12,5 @@ class UserSQL(db.Model):
     created = db.Column(db.DateTime)
     updated = db.Column(db.DateTime)
 
-    UniqueConstraint(email)
+    #UniqueConstraint(email)
+    __table_args__ = (UniqueConstraint("email"),)
