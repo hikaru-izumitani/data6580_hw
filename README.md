@@ -2,17 +2,18 @@
 
 ## Setting
 ```zsh
-　git clone -b feature https://github.com/hikaru-izumitani/data6580_hw.git
+git clone -b feature https://github.com/hikaru-izumitani/data6580_hw.git
 ```
-
+Set a virtual environment of Python
 ```zsh
 python -m venv .venv
 ```
 
-To use the virtual environment of Python
+Then, use the virtual environment of Python
 ```zsh
 source .venv/bin/activate
 ```
+Setup Python packages
 
 ```zsh
 pip install -r requirements.txt
@@ -25,3 +26,5 @@ pip install Flask-SQLAlchemy
 # For macOS users: Run the application via terminal
 python -m data5580_hw.app
 ```
+
+![Package Diagram](./packages.png)
