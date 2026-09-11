@@ -1,3 +1,4 @@
+"""File 4 gateways/user_repository.py for File 3 services/user_service.py"""
 from datetime import datetime
 from models.user_model import UserSQL
 from services.database.database_client import db
@@ -52,3 +53,6 @@ class SQLAlchemyUserRepository:
         db.session.delete(user)
         db.session.commit()
         return True
+    def find_by_email(self, email: str):
+        stmt = db.select(UserSQL).filter_by(email=email)
+        return db.session.execute(stmt).scalar_one_or_none()
