@@ -1,3 +1,4 @@
+# File 6 user_sql.py for File 4 gateways/user_repository.py
 from sqlalchemy import UniqueConstraint
 from data5580_hw.services.database.database_client import db
 

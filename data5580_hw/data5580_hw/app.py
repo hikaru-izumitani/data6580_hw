@@ -1,3 +1,4 @@
+"""File 1"""
 from flask import Flask, jsonify
 from services.database.database_client import db
 from controllers.user_controller import user_bp
@@ -9,14 +10,14 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # 1. データベースの初期化
+    # 1. initialize database
     db.init_app(app)
 
-    # 2. データベースのテーブルを作成
+    # 2. create database table
     with app.app_context():
         db.create_all()
 
-    # 3. コントローラー（Blueprint）の登録
+    # 3. register blueprint
     app.register_blueprint(user_bp)
 
     @app.route("/", methods=["GET"])
