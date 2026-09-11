@@ -1,6 +1,6 @@
 from sqlalchemy import UniqueConstraint, Index
 
-from data5580_hw.services.database.database_client import db
+from data5580_hw_test2.services.database.database_client import db
 
 
 class UserSQL(db.Model):

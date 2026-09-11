@@ -27,4 +27,4 @@ def create_user():
     except KeyError as e:
         return jsonify({'error': str(e)}), 400
 
-    return jsonify(user), 200
+    return jsonify(user_), 200
