@@ -23,8 +23,7 @@ pip install Flask-SQLAlchemy
 
 ## Run
 ```zsh
-# For macOS users: Run the application via terminal
 python -m data5580_hw.app
 ```
 
-![Package Diagram](./packages.png)
+![Diagram](./HexagonalArchitecture.jpg)
