@@ -18,6 +18,8 @@ Setup Python packages
 ```zsh
 pip install -r requirements.txt
 pip install Flask-SQLAlchemy
+pip install pylint
+pip install pytest-cov
 ```
 
 
@@ -25,5 +27,11 @@ pip install Flask-SQLAlchemy
 ```zsh
 python -m data5580_hw.app
 ```
+
+If you want to see the depencency of the package
+```zsh
+pyreverse -o png data5580_hw
+```
+it generates package.png and classes.png
 
 ![Diagram](./HexagonalArchitecture.jpg)
