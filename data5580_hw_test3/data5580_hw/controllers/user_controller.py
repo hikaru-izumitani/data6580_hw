@@ -41,7 +41,10 @@ class UserController(object):
 
     def get_user(self, user_id: str) -> tuple[str, int]:
 
-        user_sql = db.session.query(User).filter(User.id == user_id).one_or_none()
+        user_sql = db.session.query(UserSQL).filter(UserSQL.id == user_id).one_or_none()
+
+        if not user_sql:
+            return jsonify({"error": "User not found"}),404
 
         user_ = User.from_user_sql(user_sql)
 
