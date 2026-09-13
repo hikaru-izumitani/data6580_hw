@@ -41,8 +41,12 @@ jobs:
       run: |
         coverage run --source=data5580_hw -m pytest
         coverage xml
-        # ルートにある coverage.xml のファイルパスに "data5580_hw/" を付与する
+        
+        # ★ここが一番重要！生成された root の coverage.xml 内のパスに "data5580_hw/" を強制的に補正する
         sed -i 's|filename="|filename="data5580_hw/|g' coverage.xml
+        
+        # 念のため、書き換わった中身がログに出るようにする
+        head -n 20 coverage.xml
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
       with:
