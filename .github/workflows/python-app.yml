@@ -42,7 +42,7 @@ jobs:
         coverage run --source=data5580_hw -m pytest
         coverage xml
         
-        # ★ここが一番重要！生成された root の coverage.xml 内のパスに "data5580_hw/" を強制的に補正する
+        # ★Linux（GitHub Actions環境）用の sed コマンド (-i の後ろに何も置かない)
         sed -i 's|filename="|filename="data5580_hw/|g' coverage.xml
         
         # 念のため、書き換わった中身がログに出るようにする
