@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest coverage tox
+        pip install flake8 pytest pytest-cov coverage tox
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -39,9 +39,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run tests and generate coverage
       run: |
-        python -m coverage run --source=data5580_hw -m pytest
+        pytest --cov --cov-report=xml --cov-config=.coveragerc --cov-branch
         python -m coverage report -m
-        python -m coverage xml
         head -n 20 coverage.xml
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
@@ -50,3 +49,4 @@ jobs:
           -Dsonar.python.coverage.reportPaths=coverage.xml
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
