@@ -1,5 +1,0 @@
-flask
-pytest
-dataclasses
-sqlalchemy
-flask_alchemy
