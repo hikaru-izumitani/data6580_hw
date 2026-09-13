@@ -54,6 +54,14 @@ class UserController(object):
             db.session.rollback()
             return jsonify({'error': 'the email is already in use'}),400
         return jsonify(asdict(user_)), 200
+        
+        """return (
+            jsonify({
+                'message': 'User created successfully.',
+                'user': asdict(user_), 
+            }),
+            200,
+        )"""
 
     def get_user(self, user_id: str) -> tuple[str, int]:
 
