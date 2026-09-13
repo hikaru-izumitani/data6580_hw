@@ -44,5 +44,8 @@ jobs:
         cat coverage.xml
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
+      with:
+        args: >
+          -Dsonar.python.coverage.reportPaths=coverage.xml
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
