@@ -41,7 +41,8 @@ jobs:
       run: |
         coverage run --source=data5580_hw -m pytest
         coverage xml
-        cat coverage.xml
+        # ルートにある coverage.xml のファイルパスに "data5580_hw/" を付与する
+        sed -i 's|filename="|filename="data5580_hw/|g' coverage.xml
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
       with:
