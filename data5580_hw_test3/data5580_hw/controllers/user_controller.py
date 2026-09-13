@@ -25,12 +25,13 @@ class UserController(object):
     def create_user() -> tuple[str, int]:
 
         request_data = request.get_json()
-        if not validate_email(request_data['email']):
-            return jsonify({'error': 'Invalid email format'}), 400
-
-        id_ = uuid.uuid4().hex
-
         try:
+            if not validate_email(request_data['email']):
+                return jsonify({'error': 'Invalid email format'}), 400
+
+            id_ = uuid.uuid4().hex
+
+        
             user_ = User(
                 id=id_,
                 name=request_data['name'],
@@ -48,20 +49,16 @@ class UserController(object):
             user_ = User.from_user_sql(user_sql)
 
         except KeyError as e:
-            return jsonify({'error': str(e)}), 400
+            return jsonify({'error': f'{str(e)}'}), 400
 
         except IntegrityError:
             db.session.rollback()
             return jsonify({'error': 'the email is already in use'}),400
-        return jsonify(asdict(user_)), 200
+
+        user_data = asdict(user_)
+        user_data["message"] = "User created successfully."
+        return jsonify(user_data), 200
         
-        """return (
-            jsonify({
-                'message': 'User created successfully.',
-                'user': asdict(user_), 
-            }),
-            200,
-        )"""
 
     def get_user(self, user_id: str) -> tuple[str, int]:
 
@@ -88,9 +85,16 @@ class UserController(object):
             if not validate_email(request_data['email']):
                 return jsonify({'error': 'Invalid email format'}), 400
             user_sql.email = request_data['email']
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({"error": "the email is already in use"}), 400
+
         user_ = User.from_user_sql(user_sql)
-        return jsonify(asdict(user_)), 200
+        user_data = asdict(user_)
+        user_data["message"] = "User updated successfully."
+        return jsonify(user_data), 200
 
     def delete_user(self, user_id:str) -> tuple[str, int]:
         user_sql = db.session.query(UserSQL).filter(UserSQL.id == user_id).one_or_none()
@@ -98,10 +102,12 @@ class UserController(object):
             return jsonify({"error": "User not found"}), 404
         db.session.delete(user_sql)
         db.session.commit()
-        return jsonify({'message':'User deleted successfully'}), 200
+        return jsonify({'message':'User deleted successfully.'}), 200
 
     def fetch_all_users(self) -> tuple[str, int]:
         users = db.session.query(UserSQL).all()
+        if not users:
+            return jsonify({"error": "User not found"}),404
 
         user_list = [asdict(User.from_user_sql(user)) for user in users]
 
@@ -118,22 +124,23 @@ class UserController(object):
         if 'name' not in request_data:
             return jsonify({'error':'You need name to update.'}), 400
         if 'email' not in request_data:
-            return jsonify({'error':'You need email to update'}), 400
+            return jsonify({'error':'You need email to update.'}), 400
         if not validate_email(request_data['email']):
             return jsonify({'error': 'Invalid email format'}), 400
 
         user_sql.name = request_data['name']
         user_sql.email = request_data['email']
 
-        db.session.commit()
+        #db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({"error": "the email is already in use"}), 400
         user_ = User.from_user_sql(user_sql)
-        return (
-            jsonify({
-                'message': 'User details updated successfully.',
-                'user': asdict(user_), 
-            }),
-            200,
-        )
+        user_data = asdict(user_)
+        user_data["message"] = "User updated successfully." 
+        return jsonify(user_data), 200
 
 
 
