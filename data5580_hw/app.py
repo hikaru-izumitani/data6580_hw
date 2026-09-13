@@ -18,6 +18,7 @@ def create_app():
     app = Flask(__name__)
 
     from data5580_hw.config import Config
+    
 
     app.config.from_object(Config)
 
