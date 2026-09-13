@@ -22,7 +22,18 @@ class User(object):
                        , created=self.created
                        , updated=self.updated
                         )
-
+    @classmethod
+    def from_user_sql(cls, user_sql:UserSQL) -> "User":
+        if not user_sql:
+            return None
+        return cls(
+            id=user_sql.id
+            , name=user_sql.name
+            , email=user_sql.email
+            , created = user_sql.created
+            , updated = user_sql.updated
+        )
+    """
     @classmethod
     def from_user_sql(cls, id_):
         user_sql = db.session.query(UserSQL).filter(UserSQL.id == id_).first()
@@ -34,3 +45,4 @@ class User(object):
             , created=user_sql.created
             , updated=user_sql.updated
         )
+    """
