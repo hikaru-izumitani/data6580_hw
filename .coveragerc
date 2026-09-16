@@ -1,3 +1,6 @@
 [run]
-source = .
+source = data5580_hw
 relative_files = True
+omit =
+    hello.py
+    tests/*
