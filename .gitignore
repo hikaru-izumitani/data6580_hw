@@ -12,3 +12,4 @@ coverage.xml
 instance/
 *.db
 mlartifacts/
+mlflow.db

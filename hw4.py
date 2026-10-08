@@ -35,6 +35,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ============================================================
 
 run_ids = []
+"""
+n_estimators = 1  → run_id_1
+n_estimators = 10 → run_id_2
+n_estimators = 50 → run_id_3
+"""
 
 for n_estimators in [1, 10, 50]:
 
@@ -83,6 +88,7 @@ for n_estimators in [1, 10, 50]:
         )
 
         # Save Run ID
+        # run_id_1 (1), run_id_2 (10), run_id_3 (50)
         run_ids.append(run.info.run_id)
 
         print(
