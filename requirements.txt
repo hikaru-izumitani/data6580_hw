@@ -2,3 +2,5 @@ flask
 Flask-SQLAlchemy
 pytest
 pytest-cov
+mlflow
+scikit-learn
