@@ -94,8 +94,8 @@ for n_estimators in [1, 10, 50]:
         print(
             f"Run ID: {run.info.run_id}"
             f" | n_estimators: {n_estimators}"
-            f" | accuracy: {accuracy:.4f}"
-            f" | f1: {f1:.4f}"
+            f" | accuracy: {accuracy}"
+            f" | f1: {f1}"
         )
 
 
@@ -110,9 +110,18 @@ def select_best_run(
     tolerance=0.0001
 ):
     """
-    Compare MLflow runs using a primary metric.
-    If the primary metric values are tied or very close,
-    use the secondary metric as a tie-breaker.
+    Compare MLflow runs and select the best performing run.
+
+    Args:
+        run_ids: List of MLflow Run IDs to compare.
+        primary_metric: Metric used to select the best model.
+            Higher values are considered better.
+        secondary_metric: Metric used to break ties.
+        tolerance: Maximum difference between primary metrics
+            to consider runs tied.
+
+    Returns:
+        A dictionary containing the best Run ID and comparison results.
     """
 
     if not run_ids:
@@ -241,8 +250,8 @@ for item in result["all_results"]:
 
     print(
         f"Run ID: {item['run_id']}"
-        f" | accuracy: {item['primary_metric']:.4f}"
-        f" | f1: {item['secondary_metric']:.4f}"
+        f" | accuracy: {item['primary_metric'] }"
+        f" | f1: {item['secondary_metric']  }"
     )
 
 
@@ -258,12 +267,12 @@ print(
 
 print(
     f"Best Accuracy: "
-    f"{result['best_primary_metric']:.4f}"
+    f"{result['best_primary_metric']  }"
 )
 
 print(
     f"Best F1-score: "
-    f"{result['best_secondary_metric']:.4f}"
+    f"{result['best_secondary_metric']  }"
 )
 
 
@@ -328,9 +337,9 @@ verified_f1 = f1_score(
 )
 
 print(
-    f"Verified Accuracy: {verified_accuracy:.4f}"
+    f"Verified Accuracy: {verified_accuracy}"
 )
 
 print(
-    f"Verified F1-score: {verified_f1:.4f}"
+    f"Verified F1-score: {verified_f1}"
 )
