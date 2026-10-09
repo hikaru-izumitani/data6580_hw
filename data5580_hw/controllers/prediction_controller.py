@@ -25,7 +25,11 @@ class PredictionController(object):
         prediction = Prediction(
             features=features,
         )
-        prediction = prediction_service.create_service(prediction=prediction)
+        #prediction = prediction_service.create_service(prediction=prediction)
+        prediction = prediction_service.create_prediction(
+            model_name=model_name,
+            model_version=model_version,
+            prediction=prediction)
         return json.dumps(prediction.to_dict()), 200
     def get_prediction(prediction_id: str) -> tuple[dict, int]:
         prediction = Prediction.from_prediction_sql(prediction_id)
@@ -33,3 +37,5 @@ class PredictionController(object):
     @classmethod
     def get_prediction_sql(cls, id_: str) -> 'PredictionSQL':
         return db.session.query(PredictionSQL).filter_by(id=id_).first()
+
+prediction_controller = PredictionController()

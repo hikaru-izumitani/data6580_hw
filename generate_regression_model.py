@@ -77,7 +77,8 @@ with mlflow.start_run() as run:
 
     logged_model = mlflow.sklearn.log_model(
         sk_model=model,
-        name="model",
+        #name="model",
+        artifact_path="model",
         signature=signature,
         registered_model_name=REGISTERED_MODEL_NAME,
         skops_trusted_types=["sklearn.tree._tree.Tree"]

@@ -17,9 +17,7 @@ Setup Python packages
 
 ```zsh
 pip install -r requirements.txt
-pip install Flask-SQLAlchemy
 pip install pylint
-pip install pytest-cov
 ```
 
 

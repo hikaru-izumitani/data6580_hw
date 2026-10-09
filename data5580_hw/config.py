@@ -13,7 +13,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     LOGGING_LEVEL = logging.DEBUG
-
+    MLFLOW_TRACKING_URI = "http://localhost:8080"
     TRACKING_URI = "http://localhost:8080"
     MODELS = {
         'california-housing': {

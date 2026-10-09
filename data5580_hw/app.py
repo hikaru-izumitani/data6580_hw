@@ -30,7 +30,7 @@ def create_app():
         return jsonify({'message': 'Hello World!'})
 
     init_blueprints(app)
-    mlflow_gateway.init_app()
+    mlflow_gateway.mlflow_gateway.init_app(app)
 
     return app
 
