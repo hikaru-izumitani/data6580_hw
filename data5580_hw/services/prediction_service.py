@@ -29,8 +29,10 @@ class PredictionService(object):
         prediction.model = model
 
         #prediction = inference_service.create_inference(prediction)
-        features_df = pd.DataFrame([prediction.features]) # ※特徴量の形式に合わせて調整
+        features_df = pd.DataFrame([prediction.features]) # 
         prediction.score = float(model.model.predict(features_df)[0])
+        #except ValueError as e:
+        #logger.warning(f"Feature mismatch error for model {model_name} v{model_version}: {str(e)}")
         prediction.label_numeric = prediction.score
 
         model_sql = model.to_sql()
