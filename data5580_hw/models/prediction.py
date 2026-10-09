@@ -14,13 +14,14 @@ import json
 def get_id() -> str:
     return uuid.uuid4().hex
 
+@dataclass
 class Model(object):
     name: str
     version: str
     type: str = None
     updated: Optional[datetime] = field(default_factory=datetime.now)
     created: Optional[datetime] = field(default_factory=datetime.now)
-    id: str
+    id: str = field(default_factory=get_id)
 
     def to_sql(self) -> ModelSQL:
         return ModelSQL(
