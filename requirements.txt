@@ -2,3 +2,10 @@ flask
 Flask-SQLAlchemy
 pytest
 pytest-cov
+dataclasses-json
+mlflow
+numpy
+pandas
+scikit-learn
+shap
+faker
