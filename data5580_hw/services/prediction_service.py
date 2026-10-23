@@ -10,6 +10,7 @@ from data5580_hw.gateways import mlflow_gateway
 from data5580_hw.models.prediction import Prediction, Model
 from data5580_hw.services.database.prediction_sql import PredictionSQL
 from data5580_hw.services.inference_service import inference_service
+from data5580_hw.services.explainer_service import explainer_service
 from data5580_hw.services.database.database_client import db
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,11 @@ class PredictionService(object):
             #name=model_name,
             #version=model_version
         #)
+        prediction = inference_service.create_inference(prediction)
         model = mlflow_gateway.mlflow_gateway.get_model(model_name, model_version)
-
-
+        # TODO: Check if the model is present before creating a new one
+        if prediction.model._explainer:
+            prediction = explainer_service.create_explanation(prediction)
         prediction.model = model
 
         #prediction = inference_service.create_inference(prediction)
@@ -43,7 +46,7 @@ class PredictionService(object):
         except IntegrityError as e:
             logger.error(str(e))
             raise e
-        prediction = Prediction.from_prediction_sql(prediction_sql.id)
+        prediction = prediction.from_prediction_sql(prediction_sql.id)
         #user_sql = db.session.query(PredictionSQL).filter_by(id=prediction.id).first()
         logger.info(f"Created prediction: {prediction.id} for {prediction.model.name} {prediction.model.version}.")
         return prediction

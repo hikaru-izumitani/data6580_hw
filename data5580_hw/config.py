@@ -21,8 +21,14 @@ class Config:
                 "model": None,
                 "model_type": "REGRESSION",
                 "mlflow_flavor": "sklearn",
+                "explainer_path": "",
                 "labels": None,
-                "threshold": None
+                "threshold": {
+                    "threshold": 0.6,
+                    "ABOVE_THRESHOLD": "APPROVE",
+                    "BELOW_THRESHOLD": "DECLINE"
+
+                }
 
             }
     }

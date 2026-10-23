@@ -25,6 +25,14 @@ class MLFlowGateway:
                 
                 # 2. 定義してある _load_models を使ってロードする
                 self.models[model_name][version]["model"] = self._load_models(uri, flavor)
+
+                #explainer = None
+                if self.models[model_name][version].get("explainer_path", None) is not None:
+                    #from mlflow.client import MlflowClient
+                    explainer_path = self.models[model_name][version]["explainer_path"]
+                    explainer = mlflow.pyfunc.load_model(f"models:/{explainer_path}")
+                    self.models[model_name][version]["explainer"] = explainer
+
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
 
@@ -48,6 +56,7 @@ class MLFlowGateway:
         )
 
         model.model = model_["model"]
+        model._explainer = model_["explainer"]
 
         return model
 

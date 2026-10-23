@@ -9,3 +9,6 @@ pandas
 scikit-learn
 shap
 faker
+arize
+notebook
+matplotlib

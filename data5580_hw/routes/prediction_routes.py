@@ -10,7 +10,9 @@ prediction_blueprint = Blueprint('prediction', __name__)
 def create_user(model_name, model_version):
 
     request_data = request.get_json()
+
     features = request_data["features"]
+    
     return prediction_controller.create_prediction(model_name, model_version, features)
 
 

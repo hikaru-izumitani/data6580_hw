@@ -4,9 +4,11 @@ import enum
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, Dict, Union, List
 
-from data5580_hw.services.database.prediction_sql import PredictionSQL, ModelSQL
+from arize.utils.types import ModelTypes
+
+from data5580_hw.services.database.prediction_sql import PredictionSQL, ModelSQL, ShapSQL
 from data5580_hw.services.database.database_client import db
 
 import json
@@ -15,6 +17,30 @@ from decimal import Decimal
 def get_id() -> str:
     return uuid.uuid4().hex
 
+@dataclass_json
+@dataclass
+class Shap:
+    id:str = field(default_factory=get_id)
+    label: Union[None, str] = None
+    shap_values: dict = field(default_factory=dict)
+
+    def to_sql(self, prediction_id):
+        return ShapSQL(
+            prediction_id=prediction_id,
+            label=self.label,
+            shap_values=json.dumps(self.shap_values),
+
+        )
+    @classmethod
+    def from_sql(cls, shap_sql: ShapSQL) -> 'Shap':
+        return cls(
+            id=shap_sql.id,
+            label=shap_sql.label,
+            shap_values=json.loads(shap_sql.shap_values),
+
+        )
+
+@dataclass_json
 @dataclass
 class Model(object):
     name: str
@@ -25,13 +51,17 @@ class Model(object):
     created: Optional[datetime] = field(default_factory=datetime.now)
     id: str = field(default_factory=get_id)
 
+    _model = None
+    _explainer = None
+
     def to_sql(self) -> ModelSQL:
         return ModelSQL(
             id=self.id,
             model_name=self.name,
+            type=self.type.__repr__,
             model_version=self.version,
             created=self.created,
-            updated=self.updated
+            updated=self.updated,
         )
 
     @classmethod
@@ -40,12 +70,12 @@ class Model(object):
             name=model_sql.model_name,
             version=model_sql.model_version,
             id=model_sql.id,
-            #type=model_sql.type,
+            type=model_sql.type,
             updated=model_sql.updated,
-            created=model_sql.created
+            created=model_sql.created,
         )
 
-
+@dataclass_json
 @dataclass
 class Prediction(object):
     id: str = field(default_factory=get_id)
@@ -58,6 +88,7 @@ class Prediction(object):
     label_numeric: Optional[int|float] = None
     actual_str: Optional[enum.StrEnum] = None
     actual_numeric: Optional[int|float] = None
+    shap_values: List[Shap] = field(default_factory=List)
     updated: Optional[datetime] = field(default_factory=datetime.now)
     created: Optional[datetime] = field(default_factory=datetime.now)
 
@@ -82,6 +113,10 @@ class Prediction(object):
         return convert_types(data)
 
     def to_prediction_sql(self) -> 'PredictionSQL':
+        shap_sql = None
+        if self.shap_values:
+            shap_sql = [shap_sql.to_sql(self.id) for shap_sql in self.shap_values]
+
         return PredictionSQL(
             id=self.id,
             #type=self.type,
@@ -93,15 +128,22 @@ class Prediction(object):
             label_numeric=self.label_numeric,
             actual_str=self.actual_str,
             actual_numeric=self.actual_numeric,
+            shap_sql=shap_sql,
             updated=self.updated,
             created=self.created,
         )
 
     @classmethod
     def from_prediction_sql(cls, id_:str) -> 'Prediction':
+        
         prediction_sql = db.session.query(PredictionSQL).filter(PredictionSQL.id==id_).first()
         model_sql =db.session.query(ModelSQL).filter(ModelSQL.id==prediction_sql.model_id).first()
         model = Model.from_sql(model_sql)
+        shap_values = None
+        if prediction_sql.shap_values:
+            shap_values = [shap.from_sql() for shap in prediction_sql.shap_values]
+
+
         return cls(
             id=prediction_sql.id,
             #type=prediction_sql.type,
@@ -113,6 +155,7 @@ class Prediction(object):
             label_numeric=prediction_sql.label_numeric,
             actual_str=prediction_sql.actual_str,
             actual_numeric=prediction_sql.actual_numeric,
+            shap_values=shap_values,
             updated=prediction_sql.updated,
             created=prediction_sql.created,
         )

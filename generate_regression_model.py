@@ -1,4 +1,5 @@
 # mlflow server --port 8080 --backend-store-uri sqlite:///mlruns.db
+# python generate_regression_model.py
 
 import mlflow
 from tempfile import TemporaryDirectory
@@ -22,8 +23,13 @@ from sklearn.metrics import mean_squared_error, r2_score
 EXPERIMENT_NAME = "california-housing"
 REGISTERED_MODEL_NAME = "california-housing"
 
+print(f"Experiment name: {EXPERIMENT_NAME}. Connecting to MLFlow")
+
 mlflow.set_tracking_uri("http://localhost:8080")
+print("Setting experiment name")
 mlflow.set_experiment(EXPERIMENT_NAME)
+
+print(f"Experiment name: {EXPERIMENT_NAME}")
 
 # ----------------------------
 # Load dataset
@@ -46,7 +52,7 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
         with open(context.artifacts["model"], 'rb') as fin:
             self.model = pickle.load(fin)
 
-    def predict(self, context, model_input):
+    def predict(self, context, model_input, **kwards):
         # Calculate SHAP values
         return self.model.shap_values(model_input)
 
@@ -77,8 +83,7 @@ with mlflow.start_run() as run:
 
     logged_model = mlflow.sklearn.log_model(
         sk_model=model,
-        #name="model",
-        artifact_path="model",
+        name="model",
         signature=signature,
         registered_model_name=REGISTERED_MODEL_NAME,
         skops_trusted_types=["sklearn.tree._tree.Tree"]
