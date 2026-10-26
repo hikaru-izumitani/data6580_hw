@@ -2,7 +2,7 @@
 
 ## Setting
 ```zsh
-git clone -b feature https://github.com/hikaru-izumitani/data6580_hw.git
+git clone -b hw5 https://github.com/hikaru-izumitani/data6580_hw.git
 ```
 Set a virtual environment of Python
 ```zsh
@@ -17,9 +17,7 @@ Setup Python packages
 
 ```zsh
 pip install -r requirements.txt
-pip install Flask-SQLAlchemy
 pip install pylint
-pip install pytest-cov
 ```
 
 
@@ -33,5 +31,3 @@ If you want to see the depencency of the package
 pyreverse -o png data5580_hw
 ```
 it generates package.png and classes.png
-
-![Diagram](./HexagonalArchitecture.jpg)
