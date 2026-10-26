@@ -20,7 +20,6 @@ class ModelSQL(db.Model):
 
 
 
-
 class ShapSQL(db.Model):
     __tablename__ = 'shaps'
 
@@ -30,6 +29,8 @@ class ShapSQL(db.Model):
     shap_values: Mapped[dict] = mapped_column(db.CLOB)
     updated: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now())
     created: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now())
+    prediction: Mapped['PredictionSQL'] = db.relationship("PredictionSQL",back_populates="shaps")
+
 
 
 
@@ -50,3 +51,4 @@ class PredictionSQL(db.Model):
 
     model_id: Mapped['ModelSQL'] = mapped_column(db.String(120), ForeignKey("models.id"))
     model: Mapped['ModelSQL'] = db.relationship(back_populates="predictions")
+    shaps: Mapped[List['ShapSQL']] = relationship("ShapSQL", back_populates="prediction", cascade="all, delete-orphan")

@@ -24,19 +24,20 @@ class PredictionService(object):
             #name=model_name,
             #version=model_version
         #)
-        prediction = inference_service.create_inference(prediction)
+        #prediction = inference_service.create_inference(prediction)
         model = mlflow_gateway.mlflow_gateway.get_model(model_name, model_version)
         # TODO: Check if the model is present before creating a new one
-        if prediction.model._explainer:
-            prediction = explainer_service.create_explanation(prediction)
+        #if prediction.model._explainer:
+            #prediction = explainer_service.create_explanation(prediction)
         prediction.model = model
 
         #prediction = inference_service.create_inference(prediction)
-        features_df = pd.DataFrame([prediction.features]) # 
+        features_df = pd.DataFrame([prediction.features]) #
         prediction.score = float(model.model.predict(features_df)[0])
         #except ValueError as e:
         #logger.warning(f"Feature mismatch error for model {model_name} v{model_version}: {str(e)}")
         prediction.label_numeric = prediction.score
+        prediction = explainer_service.create_explanation(prediction)
 
         model_sql = model.to_sql()
         prediction_sql = prediction.to_prediction_sql()

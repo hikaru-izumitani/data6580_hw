@@ -15,11 +15,11 @@ import json
 class PredictionController(object):
     @staticmethod
     def create_prediction(model_name, model_version, features) -> tuple[dict, int]:
-        model = mlflow_gateway.get_model(model_name, model_version)
+        #model = mlflow_gateway.get_model(model_name, model_version)
         try:
             prediction = Prediction(
                 features=features,
-                model=model,
+                #model=model,
             )
             #prediction = prediction_service.create_service(prediction=prediction)
             prediction = prediction_service.create_prediction(
@@ -34,6 +34,7 @@ class PredictionController(object):
             return jsonify({"error": error_msg}), 404
         except Exception as e:
             return jsonify({"error": "An internal error occurred."}), 500
+    @staticmethod
     def get_prediction(prediction_id: str) -> tuple[dict, int]:
         prediction: Prediction = Prediction.from_prediction_sql(prediction_id)
         if not prediction:

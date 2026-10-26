@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Dict, Union, List
 
-from arize.utils.types import ModelTypes
-
 from data5580_hw.services.database.prediction_sql import PredictionSQL, ModelSQL, ShapSQL
 from data5580_hw.services.database.database_client import db
 
@@ -26,6 +24,7 @@ class Shap:
 
     def to_sql(self, prediction_id):
         return ShapSQL(
+            id=self.id,
             prediction_id=prediction_id,
             label=self.label,
             shap_values=json.dumps(self.shap_values),
@@ -45,7 +44,7 @@ class Shap:
 class Model(object):
     name: str
     version: str
-    type: str = None
+    type: Optional[str] = None
     threshold: Optional[float] = None
     updated: Optional[datetime] = field(default_factory=datetime.now)
     created: Optional[datetime] = field(default_factory=datetime.now)
@@ -58,7 +57,7 @@ class Model(object):
         return ModelSQL(
             id=self.id,
             model_name=self.name,
-            type=self.type.__repr__,
+            model_type=self.type,
             model_version=self.version,
             created=self.created,
             updated=self.updated,
@@ -70,12 +69,11 @@ class Model(object):
             name=model_sql.model_name,
             version=model_sql.model_version,
             id=model_sql.id,
-            type=model_sql.type,
+            type=model_sql.model_type,
             updated=model_sql.updated,
             created=model_sql.created,
         )
 
-@dataclass_json
 @dataclass
 class Prediction(object):
     id: str = field(default_factory=get_id)
@@ -88,7 +86,7 @@ class Prediction(object):
     label_numeric: Optional[int|float] = None
     actual_str: Optional[enum.StrEnum] = None
     actual_numeric: Optional[int|float] = None
-    shap_values: List[Shap] = field(default_factory=List)
+    shap_values: List[Shap] = field(default_factory=list)
     updated: Optional[datetime] = field(default_factory=datetime.now)
     created: Optional[datetime] = field(default_factory=datetime.now)
 
@@ -110,12 +108,18 @@ class Prediction(object):
                 return float(obj)  # または必要に応じて int など
             return obj
 
-        return convert_types(data)
+        data = convert_types(data)
+        data["label"] = data["label_str"] if data.get("label_str") is not None else data.get("label_numeric")
+        if data.get("shap_values"):
+            data["shap_values"] = data["shap_values"][0]["shap_values"]
+        else:
+            data["shap_values"] = {}
+        return data
 
     def to_prediction_sql(self) -> 'PredictionSQL':
         shap_sql = None
         if self.shap_values:
-            shap_sql = [shap_sql.to_sql(self.id) for shap_sql in self.shap_values]
+            shap_sql = [shap.to_sql(self.id) for shap in self.shap_values]
 
         return PredictionSQL(
             id=self.id,
@@ -128,7 +132,7 @@ class Prediction(object):
             label_numeric=self.label_numeric,
             actual_str=self.actual_str,
             actual_numeric=self.actual_numeric,
-            shap_sql=shap_sql,
+            shaps=shap_sql or [],
             updated=self.updated,
             created=self.created,
         )
@@ -140,9 +144,9 @@ class Prediction(object):
         model_sql =db.session.query(ModelSQL).filter(ModelSQL.id==prediction_sql.model_id).first()
         model = Model.from_sql(model_sql)
         shap_values = None
-        if prediction_sql.shap_values:
-            shap_values = [shap.from_sql() for shap in prediction_sql.shap_values]
-
+        if prediction_sql.shaps:
+            shap_values = [Shap.from_sql(shap_sql) for shap_sql in prediction_sql.shaps]
+        
 
         return cls(
             id=prediction_sql.id,
@@ -174,5 +178,3 @@ class Prediction(object):
         return cls(
             features=features
         )
-
-    #26-homework-5

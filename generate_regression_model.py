@@ -22,6 +22,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 # ----------------------------
 EXPERIMENT_NAME = "california-housing"
 REGISTERED_MODEL_NAME = "california-housing"
+REGISTERED_EXPLAINER_NAME = "california-housing-explainer"
 
 print(f"Experiment name: {EXPERIMENT_NAME}. Connecting to MLFlow")
 
@@ -114,6 +115,16 @@ with mlflow.start_run() as run:
             , signature=mlflow.models.signature.infer_signature(model_input=X_test,
                                                                 model_output=explainer.shap_values(X_test))
             , extra_pip_requirements=['shap']
+            , registered_model_name=REGISTERED_EXPLAINER_NAME
+        )
+
+        print(
+            f"Registered explainer: {REGISTERED_EXPLAINER_NAME} "
+            f"version {response.registered_model_version}"
+        )
+        print(
+            "Set explainer_path to "
+            f"{REGISTERED_EXPLAINER_NAME}/{response.registered_model_version}"
         )
 
 

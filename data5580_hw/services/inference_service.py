@@ -1,6 +1,6 @@
 from data5580_hw.models.prediction import Prediction
 
-from arize.utils.types import ModelTypes
+#from arize.utils.types import ModelTypes
 
 
 class InferenceService:
@@ -11,13 +11,15 @@ class InferenceService:
     @staticmethod
     def create_inference(prediction: Prediction) -> Prediction:
 
-        if prediction.model.type == ModelTypes.REGRESSION:
+        #if prediction.model.type == ModelTypes.REGRESSION:
+        if prediction.model.type == "REGRESSION":
 
             label = prediction.model._model.predict(prediction.features, )
             label = label[0]
             prediction.label_numeric = label
         
-        elif prediction.model.type == ModelTypes.SCORE_CATEGORICAL:
+        #elif prediction.model.type == ModelTypes.SCORE_CATEGORICAL:
+        elif prediction.model.type == "SCORE_CATEGORICAL":
             proba = prediction.model._model.predict_proba(prediction.features)
 
             if proba >= prediction.model.threshold["threshold"]:

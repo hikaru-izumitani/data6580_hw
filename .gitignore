@@ -13,3 +13,4 @@ instance/
 *.db
 mlartifacts/
 memo.py
+memo.txt

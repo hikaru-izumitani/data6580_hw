@@ -27,11 +27,18 @@ class MLFlowGateway:
                 self.models[model_name][version]["model"] = self._load_models(uri, flavor)
 
                 #explainer = None
-                if self.models[model_name][version].get("explainer_path", None) is not None:
+                #if self.models[model_name][version].get("explainer_path", None) is not None:
                     #from mlflow.client import MlflowClient
-                    explainer_path = self.models[model_name][version]["explainer_path"]
-                    explainer = mlflow.pyfunc.load_model(f"models:/{explainer_path}")
-                    self.models[model_name][version]["explainer"] = explainer
+                    #explainer_path = self.models[model_name][version]["explainer_path"]
+                    #explainer = mlflow.pyfunc.load_model(f"models:/{explainer_path}")
+                    #self.models[model_name][version]["explainer"] = explainer
+                explainer_path = model_config.get("explainer_path")
+                if explainer_path:
+                    self.models[model_name][version]["explainer"] = mlflow.pyfunc.load_model(
+                        f"models:/{explainer_path}"
+                    )
+                else:
+                    self.models[model_name][version]["explainer"] = None
 
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
@@ -56,7 +63,8 @@ class MLFlowGateway:
         )
 
         model.model = model_["model"]
-        model._explainer = model_["explainer"]
+        #model._explainer = model_["explainer"]
+        model._explainer = model_.get("explainer")
 
         return model
 
