@@ -8,7 +8,11 @@ numpy
 pandas
 scikit-learn
 shap
+umap-learn
 faker
 arize
 notebook
 matplotlib
+plotly
+ipywidgets
+umap-learn[parametric_umap]

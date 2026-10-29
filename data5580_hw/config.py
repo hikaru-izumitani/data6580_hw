@@ -22,6 +22,7 @@ class Config:
                 "model_type": "REGRESSION",
                 "mlflow_flavor": "sklearn",
                 "explainer_path": "california-housing-explainer/1",
+                "umap_path": "california-housing-umap/1",
                 "labels": None,
                 "threshold": {
                     "threshold": 0.6,

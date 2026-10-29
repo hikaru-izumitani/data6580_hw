@@ -8,9 +8,12 @@ import mlflow.sklearn
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 
+import sys
+
 import numpy as np
 import pandas as pd
 import shap
+import umap
 from sklearn.datasets import fetch_california_housing
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -23,6 +26,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 EXPERIMENT_NAME = "california-housing"
 REGISTERED_MODEL_NAME = "california-housing"
 REGISTERED_EXPLAINER_NAME = "california-housing-explainer"
+REGISTERED_UMAP_NAME = "california-housing-umap"
+UMAP_N_NEIGHBORS = 15
+UMAP_MIN_DIST = 0.1
+UMAP_N_COMPONENTS = 3
 
 print(f"Experiment name: {EXPERIMENT_NAME}. Connecting to MLFlow")
 
@@ -56,6 +63,65 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
     def predict(self, context, model_input, **kwards):
         # Calculate SHAP values
         return self.model.shap_values(model_input)
+
+
+class UMAPModel(mlflow.pyfunc.PythonModel):
+    def load_context(self, context):
+        with open(context.artifacts["model"], "rb") as fin:
+            self.model = pickle.load(fin)
+
+    def predict(self, context, model_input, params=None):
+        return self.model.transform(model_input)
+
+
+def register_umap(X_train, X_test):
+    reducer = umap.UMAP(
+        n_neighbors=UMAP_N_NEIGHBORS,
+        min_dist=UMAP_MIN_DIST,
+        n_components=UMAP_N_COMPONENTS,
+        random_state=42,
+    )
+    reducer.fit(X_train)
+    mlflow.log_param("umap_n_neighbors", UMAP_N_NEIGHBORS)
+    mlflow.log_param("umap_min_dist", UMAP_MIN_DIST)
+    mlflow.log_param("umap_n_components", UMAP_N_COMPONENTS)
+
+    sample = X_test.fillna(0).sample(n=10, random_state=123)
+    embedded = reducer.transform(sample)
+    with TemporaryDirectory() as temp_dir:
+        local_path = temp_dir + "/umap.pkl"
+        with open(local_path, "wb") as fout:
+            pickle.dump(reducer, fout)
+        response = mlflow.pyfunc.log_model(
+            artifact_path="model-umap",
+            python_model=UMAPModel(),
+            artifacts={"model": local_path},
+            input_example=sample,
+            signature=mlflow.models.signature.infer_signature(
+                model_input=sample,
+                model_output=embedded,
+            ),
+            extra_pip_requirements=["umap-learn"],
+            registered_model_name=REGISTERED_UMAP_NAME,
+        )
+
+    print(
+        f"Registered umap: {REGISTERED_UMAP_NAME} "
+        f"version {response.registered_model_version}"
+    )
+    print(
+        "Set umap_path to "
+        f"{REGISTERED_UMAP_NAME}/{response.registered_model_version}"
+    )
+    return response
+
+
+if "--umap-only" in sys.argv:
+    with mlflow.start_run() as umap_run:
+        register_umap(X_train, X_test)
+        run_id = umap_run.info.run_id
+    print(f"Run logged with ID: {run_id}")
+    raise SystemExit(0)
 
 # ----------------------------
 # Train + Log
@@ -126,6 +192,8 @@ with mlflow.start_run() as run:
             "Set explainer_path to "
             f"{REGISTERED_EXPLAINER_NAME}/{response.registered_model_version}"
         )
+
+        register_umap(X_train, X_test)
 
 
 print(f"Run logged with ID: {run_id}")

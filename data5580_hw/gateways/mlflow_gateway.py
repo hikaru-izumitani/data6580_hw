@@ -40,6 +40,14 @@ class MLFlowGateway:
                 else:
                     self.models[model_name][version]["explainer"] = None
 
+                umap_path = model_config.get("umap_path")
+                if umap_path:
+                    self.models[model_name][version]["umap"] = mlflow.pyfunc.load_model(
+                        f"models:/{umap_path}"
+                    )
+                else:
+                    self.models[model_name][version]["umap"] = None
+
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
 
@@ -65,6 +73,7 @@ class MLFlowGateway:
         model.model = model_["model"]
         #model._explainer = model_["explainer"]
         model._explainer = model_.get("explainer")
+        model._umap = model_.get("umap")
 
         return model
 

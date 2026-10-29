@@ -11,6 +11,7 @@ from data5580_hw.models.prediction import Prediction, Model
 from data5580_hw.services.database.prediction_sql import PredictionSQL
 from data5580_hw.services.inference_service import inference_service
 from data5580_hw.services.explainer_service import explainer_service
+from data5580_hw.services.embedding_service import embedding_service
 from data5580_hw.services.database.database_client import db
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class PredictionService(object):
         #logger.warning(f"Feature mismatch error for model {model_name} v{model_version}: {str(e)}")
         prediction.label_numeric = prediction.score
         prediction = explainer_service.create_explanation(prediction)
+        prediction = embedding_service.create_embedding(prediction)
 
         model_sql = model.to_sql()
         prediction_sql = prediction.to_prediction_sql()
