@@ -12,3 +12,6 @@ faker
 arize
 notebook
 matplotlib
+plotly
+ipywidgets
+umap-learn[parametric_umap]

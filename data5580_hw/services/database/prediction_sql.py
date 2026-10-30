@@ -31,6 +31,14 @@ class ShapSQL(db.Model):
     created: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now())
     prediction: Mapped['PredictionSQL'] = db.relationship("PredictionSQL",back_populates="shaps")
 
+class EmbeddingSQL(db.Model):
+    __tablename__ = 'embeddings'
+
+    id: Mapped[str] = mapped_column(db.String(120), primary_key=True)
+    prediction_id: Mapped[str] = mapped_column(db.String(120), ForeignKey('predictions.id'))
+    embeddings: Mapped[List[float]] = mapped_column(db.CLOB, nullable=True)
+    updated: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now())
+    created: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now())
 
 
 
@@ -52,3 +60,4 @@ class PredictionSQL(db.Model):
     model_id: Mapped['ModelSQL'] = mapped_column(db.String(120), ForeignKey("models.id"))
     model: Mapped['ModelSQL'] = db.relationship(back_populates="predictions")
     shaps: Mapped[List['ShapSQL']] = relationship("ShapSQL", back_populates="prediction", cascade="all, delete-orphan")
+    embeddings: Mapped[List['EmbeddingSQL']] = relationship("EmbeddingSQL", back_populates="prediction", uselist=False,cascade="all, delete-orphan")

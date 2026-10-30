@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import pickle
 import mlflow.sklearn
 from mlflow.models import infer_signature
+from umap.parametric_umap import ParametricUMAP
 from mlflow.tracking import MlflowClient
 
 import numpy as np
@@ -56,6 +57,16 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
     def predict(self, context, model_input, **kwards):
         # Calculate SHAP values
         return self.model.shap_values(model_input)
+
+# Define a custom pyfunc model
+class EmbeddingModel(mlflow.pyfunc.PythonModel):
+    def load_context(self, context):
+        #Load model and Embeddings
+        with open(context.artifacts["model"], 'rb') as fin:
+            self.model = pickle.load(fin)
+    def predict(self, context, model_input, **kwargs):
+        # Calculate Embeddings values
+        return self.model.transform(model_input)
 
 # ----------------------------
 # Train + Log
@@ -125,6 +136,32 @@ with mlflow.start_run() as run:
         print(
             "Set explainer_path to "
             f"{REGISTERED_EXPLAINER_NAME}/{response.registered_model_version}"
+        )
+    pumap = ParametricUMAP(
+        n_neighbors=15,
+        min_dist=0.1,
+        n_components=2
+    )
+
+    parametric_embedding = pumap.fit_transform(X,y)
+
+    with TemporaryDirectory() as temp_dir:
+        local_path = temp_dir + '/embedding.pkl'
+
+        with open(local_path, 'wb') as fout:
+            pickle.dump(parametric_embedding, fout)
+
+        artifacts = {
+            "model": local_path
+        }
+
+        response = mlflow.pyfunc.log_model(
+            name='model-embedding'
+            , python_model=EmbeddingModel()
+            , artifacts=artifacts
+            , input_example=X_test.fillna(0).sample(n=10, random_state=123)
+            , signature=mlflow.models.signature.infer_signature(model_input=X_test, model_output=parametric_embedding.transform(X_test))
+            , extra_pip_requirements=['umap-learn']
         )
 
 
