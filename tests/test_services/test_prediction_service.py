@@ -25,11 +25,11 @@ def test_create_prediction(app):
 
         prediction = prediction_service.create_prediction(
             model_name="california-housing",
-            model_version="4",
+            model_version="1",
             prediction=prediction,
         )
 
-        assert float(prediction.label_numeric) == pytest.approx(3.822, abs=0.001)
+        assert float(prediction.label_numeric) == pytest.approx(4.688, abs=0.001)
         assert isinstance(prediction.label_numeric, (float, Decimal))
 
         shap_values = prediction.shap_values[0].shap_values
@@ -45,14 +45,16 @@ def test_create_prediction(app):
 
         again = prediction_service.create_prediction(
             model_name="california-housing",
-            model_version="4",
+            model_version="1",
             prediction=Prediction(features=FEATURES),
         )
         assert again.embeddings[0].values == stored.values
 
         body = prediction.to_dict()
-        assert body["label"] == pytest.approx(3.822, abs=0.001)
-        assert body["shap_values"] == shap_values
+        assert body["label"] == 468800
+        assert body["shap_values"] == {
+            name: float(value) * 100_000 for name, value in shap_values.items()
+        }
         assert body["embeddings"]["kind"] == "inputs"
         assert body["embeddings"]["x"] == stored.values[0]
         assert body["embeddings"]["y"] == stored.values[1]
@@ -61,7 +63,7 @@ def test_create_prediction(app):
 
 def test_unknown_model_version_returns_error(app):
     response = app.test_client().post(
-        "/model/california-housing/version/99",
+        "/v1/california-housing/version/99/predict",
         json={"features": FEATURES},
     )
 
@@ -79,7 +81,7 @@ def test_shap_failure_returns_descriptive_error(app, monkeypatch):
     )
 
     response = app.test_client().post(
-        "/model/california-housing/version/4",
+        "/v1/california-housing/version/1/predict",
         data=json.dumps({"features": FEATURES}),
         content_type="application/json",
     )
@@ -98,7 +100,7 @@ def test_umap_failure_returns_descriptive_error(app, monkeypatch):
     )
 
     response = app.test_client().post(
-        "/model/california-housing/version/4",
+        "/v1/california-housing/version/1/predict",
         data=json.dumps({"features": FEATURES}),
         content_type="application/json",
     )

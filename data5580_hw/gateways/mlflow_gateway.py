@@ -60,7 +60,7 @@ class MLFlowGateway:
             raise ValueError(f"Invalid flavor: {flavor}")
 
         
-    def get_model(self, name, version):
+    def get_model(self, name, version) -> Model:
         model_ = self.models[name][version]
 
         model = Model(

@@ -152,6 +152,14 @@ class Prediction(object):
             data["shap_values"] = data["shap_values"][0]["shap_values"]
         else:
             data["shap_values"] = {}
+        
+        DOLLARS = 100_000
+        if data.get("label_str") is None and data.get("label") is not None:
+            data["label"] = int(round(float(data["label"]) * DOLLARS))
+            data["shap_values"] = {
+                name: float(value) * DOLLARS
+                for name, value in data["shap_values"].items()
+            }
         data["embeddings"] = _format_embeddings(data.get("embeddings"))
         return data
 

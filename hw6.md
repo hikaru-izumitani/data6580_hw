@@ -37,7 +37,13 @@ Created version '1' of model 'california-housing'.
 Set explainer_path to california-housing-explainer/1
 ```
 
-Set `MODELS` in `data5580_hw/config.py` to those version numbers. The values in this repository, version `4` and `california-housing-explainer/1`, match the registry used during development. On a new registry, use the numbers from the log, for example:
+The same script also registers the UMAP model `california-housing-umap`. On an empty registry that is version **1** as well. `data5580_hw/config.py` in this repository already points at those three version-1 names:
+
+```text
+Set umap_path to california-housing-umap/1
+```
+
+If the log prints different version numbers, copy them into `MODELS`. For example:
 
 ```python
 MODELS = {
@@ -47,13 +53,14 @@ MODELS = {
             "model_type": "REGRESSION",
             "mlflow_flavor": "sklearn",
             "explainer_path": "california-housing-explainer/1",
+            "umap_path": "california-housing-umap/1",
             ...
         }
     }
 }
 ```
 
-`"1"` is the prediction model version. `explainer_path` is the string printed by the script. If these do not match the registry, the app cannot load the model.
+`"1"` is the prediction model version. `explainer_path` and `umap_path` are the strings printed by the script. If these do not match the registry, the app cannot load the model.
 
 ## 3. Start the app
 
@@ -64,7 +71,7 @@ source .venv/bin/activate
 python -m data5580_hw.app
 ```
 
-At startup the app loads `models:/california-housing/<version>` and `models:/california-housing-explainer/<version>`. Flask listens on `http://127.0.0.1:5000`.
+At startup the app loads `models:/california-housing/1`, `models:/california-housing-explainer/1`, and `models:/california-housing-umap/1`. Flask listens on `http://127.0.0.1:5000`.
 
 On macOS, `localhost:5000` can be taken by AirPlay and return an empty response. Send requests to `127.0.0.1`.
 
@@ -73,7 +80,7 @@ On macOS, `localhost:5000` can be taken by AirPlay and return an empty response.
 Use the same feature names and column order as the California Housing training data.
 
 ```zsh
-curl -s -X POST http://127.0.0.1:5000/model/california-housing/version/1 \
+curl -s -X POST http://127.0.0.1:5000/v1/california-housing/version/1/predict \
   -H "Content-Type: application/json" \
   -d '{
     "features": {
@@ -99,17 +106,20 @@ curl -s http://127.0.0.1:5000/prediction/paste-the-id-here
 
 ## 5. How to read the response
 
-The regression target is the median house value for a block group, in units of $100,000. A `label` of `3.822` means about $382,000. For this model, `label`, `label_numeric`, and `score` are the same number. `label_str` is for classification, so it is `null` for this regression model.
+The training target is the median house value for a block group, in units of $100,000. The API converts that prediction to dollars in the response. For version `1` and the sample input above, `label` is `468800` (dollars, with no decimal point). `label_numeric` and `score` stay in the model's units, so both are `4.688`. `label_str` is for classification, so it is `null` for this regression model.
+
+`DecisionTreeRegressor` is trained without a fixed `random_state`. A new run of `generate_regression_model.py` can therefore return a different price. The numbers above match version `1` in the registry this repository was developed against.
 
 | Field | Meaning |
 |---|---|
-| `label` | The prediction for this one input, in units of $100,000 |
-| `shap_values` | How far each feature moved that prediction from the model's baseline |
+| `label` | The prediction for this one input, in dollars |
+| `label_numeric` / `score` | The same prediction in the model's units ($100,000) |
+| `shap_values` | How far each feature moved that prediction from the model's baseline, in dollars |
 | `features` | The input you sent |
 | `model.name` / `model.version` | The registered model that was used |
 | `model.type` | `REGRESSION` |
 
-A positive SHAP value is the amount that feature pushed the prediction above the model's average prediction. A negative value is the amount it pushed the prediction below that average. The unit is the same as `label`: $100,000. A larger absolute value means a stronger effect on this prediction.
+A positive SHAP value is the amount, in dollars, that feature pushed the prediction above the model's average prediction. A negative value is the amount it pushed the prediction below that average. A larger absolute value means a stronger effect on this prediction.
 
 | Feature | Meaning |
 |---|---|
@@ -128,7 +138,7 @@ A POST to a version that does not exist returns `404` and `Model 'california-hou
 
 ## 6. Tests
 
-Start MLflow, then align the version in `config.py` and in the test with the registered version. The tests in this repository request version `4`.
+Start MLflow, then align the version in `config.py` and in the test with the registered version. The tests in this repository request version `1`. They expect `label_numeric` of about `4.688` and a response `label` of `468800`. If a newly trained tree predicts a different price, change those two expected numbers to the values your model returns.
 
 ```zsh
 pytest tests/test_services/test_prediction_service.py
