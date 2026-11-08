@@ -25,6 +25,12 @@ class MLFlowGateway:
                 
                 # 2. Load the model with _load_models.
                 self.models[model_name][version]["model"] = self._load_models(uri, flavor)
+
+                explainer_path = model_config.get("explainer_path")
+                if explainer_path:
+                    self.models[model_name][version]["explainer"] = self._load_explainer(explainer_path)
+                else:
+                    self.models[model_name][version]["explainer"] = None
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
 
@@ -36,7 +42,9 @@ class MLFlowGateway:
         else:
             raise ValueError(f"Invalid flavor: {flavor}")
 
-        
+    def _load_explainer(self, explainer_path):
+        return mlflow.pyfunc.load_model(f"models:/{explainer_path}")
+
     def get_model(self, name, version):
         model_ = self.models[name][version]
 
@@ -48,6 +56,8 @@ class MLFlowGateway:
         )
 
         model.model = model_["model"]
+        model._model = model_["model"]
+        model._explainer = model_.get("explainer")
 
         return model
 

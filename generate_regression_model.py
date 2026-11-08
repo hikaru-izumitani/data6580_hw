@@ -21,6 +21,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 # ----------------------------
 EXPERIMENT_NAME = "california-housing"
 REGISTERED_MODEL_NAME = "california-housing"
+REGISTERED_EXPLAINER_NAME = "california-housing-explainer"
 
 mlflow.set_tracking_uri("http://localhost:8080")
 mlflow.set_experiment(EXPERIMENT_NAME)
@@ -46,7 +47,7 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
         with open(context.artifacts["model"], 'rb') as fin:
             self.model = pickle.load(fin)
 
-    def predict(self, context, model_input):
+    def predict(self, context, model_input, params=None):
         # Calculate SHAP values
         return self.model.shap_values(model_input)
 
@@ -55,7 +56,7 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
 # ----------------------------
 with mlflow.start_run() as run:
 
-    model = DecisionTreeRegressor()
+    model = DecisionTreeRegressor(random_state=42)
     model.fit(X_train, y_train)
 
     predictions = model.predict(X_test)
@@ -109,6 +110,16 @@ with mlflow.start_run() as run:
             , signature=mlflow.models.signature.infer_signature(model_input=X_test,
                                                                 model_output=explainer.shap_values(X_test))
             , extra_pip_requirements=['shap']
+            , registered_model_name=REGISTERED_EXPLAINER_NAME
+        )
+
+        print(
+            f"Registered explainer {REGISTERED_EXPLAINER_NAME} "
+            f"version {response.registered_model_version}"
+        )
+        print(
+            "Set explainer_path to "
+            f"{REGISTERED_EXPLAINER_NAME}/{response.registered_model_version}"
         )
 
 

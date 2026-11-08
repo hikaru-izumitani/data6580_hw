@@ -37,7 +37,8 @@ class PredictionController(object):
                 prediction=prediction)
             # return jsonify(prediction.to_dict()), 200
             body = prediction.to_dict()
-            body["label"] = prediction.label_numeric
+            if prediction.label_numeric is not None:
+                body["label"] = float(prediction.label_numeric)
             return jsonify(body), 200
         except ValueError as e:
             return jsonify({"error": str(e)}), 400

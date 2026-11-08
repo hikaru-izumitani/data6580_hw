@@ -11,10 +11,23 @@ def test_create_prediction(app):
 
         prediction = prediction_service.create_prediction(
             model_name="california-housing",
-            model_version="2",
+            model_version="5",
             prediction=prediction
         )
         
         assert prediction.label_numeric is not None
         # Accept either float or Decimal.
         assert isinstance(prediction.label_numeric, (float, Decimal))
+        assert float(prediction.label_numeric) == 1.5
+        shap_values = prediction.shap_values[0].shap_values
+        assert shap_values["MedInc"] == 0.4
+        assert set(shap_values) == {
+            "MedInc",
+            "HouseAge",
+            "AveRooms",
+            "AveBedrms",
+            "Population",
+            "AveOccup",
+            "Latitude",
+            "Longitude",
+        }
