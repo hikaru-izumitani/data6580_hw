@@ -11,3 +11,9 @@ coverage.xml
 .tox/
 instance/
 *.db
+mlartifacts/
+memo.py
+memo5.txt
+memo6.txt
+memo7.txt
+umap_embedding.py

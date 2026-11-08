@@ -11,3 +11,21 @@ class Config:
     # SQLALCHEMY_DATABASE_URI = ':memory:///data.db'
     #SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    LOGGING_LEVEL = logging.DEBUG
+    MLFLOW_TRACKING_URI = "http://localhost:8080"
+    TRACKING_URI = "http://localhost:8080"
+    MODELS = {
+        'california-housing': {
+            "5": {
+                "model": None,
+                "model_type": "REGRESSION",
+                "mlflow_flavor": "sklearn",
+                "explainer_path": "california-housing-explainer/2",
+                "embedding_path": "california-housing-umap/3",
+                "labels": None,
+                "threshold": None
+
+            }
+    }
+    }
