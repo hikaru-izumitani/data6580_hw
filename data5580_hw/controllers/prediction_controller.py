@@ -20,9 +20,13 @@ from data5580_hw.gateways import mlflow_gateway
 
 class PredictionController(object):
     @staticmethod
-    def create_prediction(model_name, model_version, features) -> tuple[dict, int]:
+    def create_prediction(model_name, model_version) -> tuple[dict, int]:
         #model = mlflow
         try:
+            request_data = request.get_json(silent=True)
+            if not isinstance(request_data, dict) or "features" not in request_data:
+                raise ValueError("Invalid input data: features are required.")
+            features = request_data["features"]
             prediction = Prediction(
                 features=features,
             )
@@ -31,7 +35,10 @@ class PredictionController(object):
                 model_name=model_name,
                 model_version=model_version,
                 prediction=prediction)
-            return jsonify(prediction.to_dict()), 200
+            # return jsonify(prediction.to_dict()), 200
+            body = prediction.to_dict()
+            body["label"] = prediction.label_numeric
+            return jsonify(body), 200
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         except (KeyError, FileNotFoundError, LookupError) as e:
@@ -39,7 +46,8 @@ class PredictionController(object):
             return jsonify({"error": error_msg}), 404
         except Exception as e:
             return jsonify({"error": "An internal error occurred."}), 500
-    def get_prediction(prediction_id: str) -> tuple[dict, int]:
+    # def get_prediction(prediction_id: str) -> tuple[dict, int]:
+    def get_prediction(self, prediction_id: str) -> tuple[dict, int]:
         prediction = Prediction.from_prediction_sql(prediction_id)
         if not prediction:
             return jsonify({"error": "Prediction not found"}), 404

@@ -12,3 +12,5 @@ coverage.xml
 instance/
 *.db
 mlartifacts/
+memo.py
+memo5.txt

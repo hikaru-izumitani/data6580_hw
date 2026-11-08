@@ -16,5 +16,5 @@ def test_create_prediction(app):
         )
         
         assert prediction.label_numeric is not None
-        # float または Decimal のどちらであってもパスするように修正
+        # Accept either float or Decimal.
         assert isinstance(prediction.label_numeric, (float, Decimal))

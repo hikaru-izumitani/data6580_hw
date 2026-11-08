@@ -76,7 +76,7 @@ class Prediction(object):
             elif isinstance(obj, datetime):
                 return obj.isoformat()
             elif isinstance(obj, Decimal):
-                return float(obj)  # または必要に応じて int など
+                return float(obj)  # or int, if needed
             return obj
 
         return convert_types(data)

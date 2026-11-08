@@ -18,12 +18,12 @@ class MLFlowGateway:
                 #model_config = self.models[model_name][version]
         for model_name, versions in self.models.items():
             for version, model_config in versions.items():
-                # 1. Config側の 'mlflow_flavor' に対応させる
+                # 1. Use 'mlflow_flavor' from config.
                 flavor = model_config.get("mlflow_flavor", model_config.get("flavor", "pyfunc"))
                 
                 uri = self._get_model_uri(model_name, version)
                 
-                # 2. 定義してある _load_models を使ってロードする
+                # 2. Load the model with _load_models.
                 self.models[model_name][version]["model"] = self._load_models(uri, flavor)
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
