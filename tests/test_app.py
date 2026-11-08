@@ -251,7 +251,7 @@ def test_create_user_invalid_email_type(client):
 
     response_number = client.post("/users", json={
         "name": "Hikaru",
-        "email": 12345678  # 数値を渡す
+        "email": 12345678  # pass a number
     })
     assert response_number.status_code == 400
 
