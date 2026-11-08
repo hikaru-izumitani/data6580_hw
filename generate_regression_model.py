@@ -10,6 +10,7 @@ from mlflow.tracking import MlflowClient
 import numpy as np
 import pandas as pd
 import shap
+import umap
 from sklearn.datasets import fetch_california_housing
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -22,6 +23,11 @@ from sklearn.metrics import mean_squared_error, r2_score
 EXPERIMENT_NAME = "california-housing"
 REGISTERED_MODEL_NAME = "california-housing"
 REGISTERED_EXPLAINER_NAME = "california-housing-explainer"
+
+REGISTERED_EMBEDDING_NAME = "california-housing-umap"
+UMAP_N_NEIGHBORS = 15
+UMAP_MIN_DIST = 0.1
+UMAP_N_COMPONENTS = 3
 
 mlflow.set_tracking_uri("http://localhost:8080")
 mlflow.set_experiment(EXPERIMENT_NAME)
@@ -50,6 +56,17 @@ class SHAPModel(mlflow.pyfunc.PythonModel):
     def predict(self, context, model_input, params=None):
         # Calculate SHAP values
         return self.model.shap_values(model_input)
+
+
+class EmbeddingModel(mlflow.pyfunc.PythonModel):
+    def load_context(self, context):
+        # Load the fitted embedding model
+        with open(context.artifacts["model"], 'rb') as fin:
+            self.model = pickle.load(fin)
+
+    def predict(self, context, model_input, params=None):
+        # Project inputs onto the fitted embedding
+        return self.model.transform(model_input)
 
 # ----------------------------
 # Train + Log
@@ -121,6 +138,38 @@ with mlflow.start_run() as run:
             "Set explainer_path to "
             f"{REGISTERED_EXPLAINER_NAME}/{response.registered_model_version}"
         )
+    reducer = umap.UMAP(
+        n_neighbors=UMAP_N_NEIGHBORS,
+        min_dist=UMAP_MIN_DIST,
+        n_components=UMAP_N_COMPONENTS,
+        random_state=42,
+    )
+    reducer.fit(X_train)
+
+    with TemporaryDirectory() as temp_dir:
+        local_path = temp_dir + '/embedding.pkl'
+        with open(local_path, 'wb') as fout:
+            pickle.dump(reducer, fout)
+        
+        artifacts = {"model": local_path}
+        embedded = reducer.transform(X_test)
+        response = mlflow.pyfunc.log_model(
+            artifact_path='model-embedding',
+            python_model=EmbeddingModel(),
+            artifacts=artifacts,
+            input_example=X_test.fillna(0).sample(n=10, random_state=123),
+            signature=mlflow.models.signature.infer_signature(model_input=X_test,
+                                                                model_output=embedded),
+            extra_pip_requirements=['umap-learn'],
+            registered_model_name=REGISTERED_EMBEDDING_NAME
+        )
+
+        print(
+            "Set embedding_path to "
+            f"{REGISTERED_EMBEDDING_NAME}/{response.registered_model_version}"
+        )
+
+
 
 
 print(f"Run logged with ID: {run_id}")

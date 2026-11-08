@@ -31,6 +31,12 @@ class MLFlowGateway:
                     self.models[model_name][version]["explainer"] = self._load_explainer(explainer_path)
                 else:
                     self.models[model_name][version]["explainer"] = None
+
+                embedding_path = model_config.get("embedding_path")
+                if embedding_path:
+                    self.models[model_name][version]["embedding"] = self._load_embedding(embedding_path)
+                else:
+                    self.models[model_name][version]["embedding"] = None
     def _get_model_uri(self, name, version):
         return f"models:/{name}/{version}"
 
@@ -45,6 +51,9 @@ class MLFlowGateway:
     def _load_explainer(self, explainer_path):
         return mlflow.pyfunc.load_model(f"models:/{explainer_path}")
 
+    def _load_embedding(self, embedding_path):
+        return mlflow.pyfunc.load_model(f"models:/{embedding_path}")
+
     def get_model(self, name, version):
         model_ = self.models[name][version]
 
@@ -58,6 +67,7 @@ class MLFlowGateway:
         model.model = model_["model"]
         model._model = model_["model"]
         model._explainer = model_.get("explainer")
+        model._embedding = model_.get("embedding")
 
         return model
 

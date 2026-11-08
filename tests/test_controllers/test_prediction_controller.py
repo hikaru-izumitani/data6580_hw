@@ -87,3 +87,19 @@ def test_get_prediction_returns_stored_shap(app):
     assert stored.status_code == 200
     assert float(stored.json["label"]) == 1.5
     assert stored.json["shap_values"] == created.json["shap_values"]
+    assert stored.json["embeddings"] == created.json["embeddings"]
+
+def test_umap_failure_returns_400(app, monkeypatch):
+    def fail(prediction):
+        raise ValueError("UMAP computation failed: invalid input data")
+
+    monkeypatch.setattr(
+        "data5580_hw.services.prediction_service.embedding_service.create_embedding",
+        fail,
+    )
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    assert response.status_code == 400
+    assert response.json["error"] == "UMAP computation failed: invalid input data"

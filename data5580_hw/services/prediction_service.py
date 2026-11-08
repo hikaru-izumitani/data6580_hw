@@ -9,6 +9,7 @@ import pandas as pd
 from data5580_hw.gateways import mlflow_gateway
 from data5580_hw.models.prediction import Prediction, Model
 from data5580_hw.services.database.prediction_sql import PredictionSQL
+from data5580_hw.services.embedding_service import embedding_service
 from data5580_hw.services.explainer_service import explainer_service
 from data5580_hw.services.inference_service import inference_service
 from data5580_hw.services.database.database_client import db
@@ -43,6 +44,13 @@ class PredictionService(object):
         else:
             raise ValueError(
                 "SHAP computation failed: explainer is not configured for "
+                f"model '{model_name}' version '{model_version}'"
+            )
+        if prediction.model._embedding:
+            prediction = embedding_service.create_embedding(prediction)
+        else:
+            raise ValueError(
+                "UMAP computation failed: embedding model is not configured for "
                 f"model '{model_name}' version '{model_version}'"
             )
         prediction.features = original_features

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Dict, List, Union
 
-from data5580_hw.services.database.prediction_sql import PredictionSQL, ModelSQL, ShapSQL
+from data5580_hw.services.database.prediction_sql import EmbeddingSQL, ModelSQL, PredictionSQL, ShapSQL
 from data5580_hw.services.database.database_client import db
 
 import json
@@ -14,6 +14,28 @@ from decimal import Decimal
 
 def get_id() -> str:
     return uuid.uuid4().hex
+
+
+@dataclass
+class Embedding:
+    id: str = field(default_factory=get_id)
+    embeddings: Optional[List] = None
+
+    def to_sql(self, prediction_id):
+        values = self.embeddings.tolist() if hasattr(self.embeddings, "tolist") else self.embeddings
+        return EmbeddingSQL(
+            id=self.id,
+            prediction_id=prediction_id,
+            embedding=json.dumps(values),
+        )
+
+    @classmethod
+    def from_sql(cls, embedding_sql: EmbeddingSQL) -> 'Embedding':
+        return cls(
+            id=embedding_sql.id,
+            embeddings=json.loads(embedding_sql.embedding) if embedding_sql.embedding else None,
+        )
+
 
 @dataclass
 class Shap:
@@ -50,6 +72,7 @@ class Model(object):
     # Loaded by the gateway. Not stored, and not part of the API payload.
     _model = None
     _explainer = None
+    _embedding = None
 
     def to_sql(self) -> ModelSQL:
         return ModelSQL(
@@ -85,6 +108,7 @@ class Prediction(object):
     actual_str: Optional[enum.StrEnum] = None
     actual_numeric: Optional[int|float] = None
     shap_values: List[Shap] = field(default_factory=list)
+    embedding_values: Optional[Embedding] = None
     updated: Optional[datetime] = field(default_factory=datetime.now)
     created: Optional[datetime] = field(default_factory=datetime.now)
 
@@ -113,10 +137,23 @@ class Prediction(object):
             data["shap_values"] = raw_shap[0].get("shap_values", {})
         elif not isinstance(raw_shap, dict):
             data["shap_values"] = {}
+        
+        raw_embedding = data.pop("embedding_values", None) or {}
+        coordinates = raw_embedding.get("embeddings") if isinstance(raw_embedding, dict) else None
+        if coordinates and len(coordinates) >= 3:
+            data["embeddings"] = {
+                "kind": "inputs",
+                "x": float(coordinates[0]),
+                "y": float(coordinates[1]),
+                "z": float(coordinates[2]),
+            }
+        else:
+            data["embeddings"] = None
         return data
 
     def to_prediction_sql(self) -> 'PredictionSQL':
         shap_rows = [item.to_sql(self.id) for item in self.shap_values] if self.shap_values else []
+        embedding_sql = self.embedding_values.to_sql(self.id) if self.embedding_values else None
         return PredictionSQL(
             id=self.id,
             #type=self.type,
@@ -129,6 +166,7 @@ class Prediction(object):
             actual_str=self.actual_str,
             actual_numeric=self.actual_numeric,
             shaps=shap_rows,
+            embedding=embedding_sql,
             updated=self.updated,
             created=self.created,
         )
@@ -139,6 +177,7 @@ class Prediction(object):
         model_sql =db.session.query(ModelSQL).filter(ModelSQL.id==prediction_sql.model_id).first()
         model = Model.from_sql(model_sql)
         shap_values = [Shap.from_sql(shap_sql) for shap_sql in prediction_sql.shaps] if prediction_sql.shaps else []
+        embedding_values = Embedding.from_sql(prediction_sql.embedding) if prediction_sql.embedding else None
         return cls(
             id=prediction_sql.id,
             #type=prediction_sql.type,
@@ -151,6 +190,7 @@ class Prediction(object):
             actual_str=prediction_sql.actual_str,
             actual_numeric=prediction_sql.actual_numeric,
             shap_values=shap_values,
+            embedding_values=embedding_values,
             updated=prediction_sql.updated,
             created=prediction_sql.created,
         )

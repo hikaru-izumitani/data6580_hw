@@ -21,8 +21,13 @@ _fake_model.feature_names_in_ = [
 ]
 _fake_explainer = MagicMock()
 _fake_explainer.predict.return_value = [[0.4, -0.1, 0.05, -0.02, 0.01, 0.03, -0.2, 0.08]]
+
+_fake_embedding = MagicMock()
+_fake_embedding.predict.return_value = [[0.24, -0.38, 0.4]]
+
 gw.MLFlowGateway._load_models = lambda self, model_uri, flavor: _fake_model
 gw.MLFlowGateway._load_explainer = lambda self, explainer_path: _fake_explainer
+gw.MLFlowGateway._load_embedding = lambda self, embedding_path: _fake_embedding
 
 from data5580_hw.app import create_app
 

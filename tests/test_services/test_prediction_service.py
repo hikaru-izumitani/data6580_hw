@@ -31,3 +31,19 @@ def test_create_prediction(app):
             "Latitude",
             "Longitude",
         }
+        stored = prediction.embedding_values.embeddings
+        assert stored == [0.24, -0.38, 0.4]
+        assert prediction.to_dict()["embeddings"] == {
+            "kind": "inputs",
+            "x": 0.24,
+            "y": -0.38,
+            "z": 0.4,
+        }
+        again = prediction_service.create_prediction(
+            model_name="california-housing",
+            model_version="5",
+            prediction=Prediction(
+                features=[8.3252, 41.0, 6.984127, 1.02381, 322.0, 2.555556, 37.88, -122.23]
+            ),
+        )
+        assert again.embedding_values.embeddings == stored
