@@ -103,3 +103,23 @@ def test_umap_failure_returns_400(app, monkeypatch):
     )
     assert response.status_code == 400
     assert response.json["error"] == "UMAP computation failed: invalid input data"
+
+
+def test_predict_logs_inference_to_arize(app, monkeypatch):
+    calls = []
+
+    def record(prediction):
+        calls.append(prediction)
+
+    monkeypatch.setattr(
+        "data5580_hw.services.prediction_service.arize_gateway.send_prediction",
+        record,
+    )
+    app.config["TESTING"] = False
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    assert response.status_code == 200
+    assert len(calls) == 1
+    assert calls[0].id == response.json["id"]

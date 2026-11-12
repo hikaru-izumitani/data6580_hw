@@ -2,11 +2,13 @@ from asyncio.log import logger
 from typing import Dict
 import logging
 
+from flask import current_app, has_app_context
 from sqlalchemy.exc import IntegrityError
 
 import pandas as pd
 
 from data5580_hw.gateways import mlflow_gateway
+from data5580_hw.gateways.arize_gateway import arize_gateway, save_for_later
 from data5580_hw.models.prediction import Prediction, Model
 from data5580_hw.services.database.prediction_sql import PredictionSQL
 from data5580_hw.services.embedding_service import embedding_service
@@ -63,11 +65,22 @@ class PredictionService(object):
         except IntegrityError as e:
             logger.error(str(e))
             raise e
+        _log_to_arize(prediction)
         prediction = Prediction.from_prediction_sql(prediction_sql.id)
         #user_sql = db.session.query(PredictionSQL).filter_by(id=prediction.id).first()
         logger.info(f"Created prediction: {prediction.id} for {prediction.model.name} {prediction.model.version}."
         f"features={original_features} label={prediction.label_numeric}")
         return prediction
+
+def _log_to_arize(prediction: Prediction) -> None:
+    if has_app_context() and current_app.config.get("TESTING"):
+        return
+    try:
+        arize_gateway.send_prediction(prediction)
+    except Exception as error:
+        logger.exception("Failed to log prediction %s to Arize.", prediction.id)
+        save_for_later("prediction", prediction.id, str(error))
+
 
 def _features_frame(features, model) -> pd.DataFrame:
     if isinstance(features, dict):

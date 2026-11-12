@@ -79,6 +79,7 @@ class Model(object):
             id=self.id,
             model_name=self.name,
             model_version=self.version,
+            model_type=self.type,
             created=self.created,
             updated=self.updated
         )
@@ -90,6 +91,7 @@ class Model(object):
             version=model_sql.model_version,
             id=model_sql.id,
             #type=model_sql.type,
+            type=model_sql.model_type,
             updated=model_sql.updated,
             created=model_sql.created
         )

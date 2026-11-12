@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 
 from data5580_hw.gateways import mlflow_gateway
+from data5580_hw.gateways.arize_gateway import arize_gateway
 from data5580_hw.routes import init_blueprints
 from data5580_hw.services.database.database_client import init_db
 
@@ -31,6 +32,7 @@ def create_app():
 
     init_blueprints(app)
     mlflow_gateway.mlflow_gateway.init_app(app)
+    arize_gateway.init_app(app)
 
     return app
 

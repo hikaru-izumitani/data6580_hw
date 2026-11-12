@@ -12,6 +12,7 @@ from data5580_hw.services.database.prediction_sql import PredictionSQL
 import json
 
 from data5580_hw.gateways import mlflow_gateway
+from data5580_hw.gateways.arize_gateway import arize_gateway, save_for_later
 
 #gateway
 
@@ -47,6 +48,23 @@ class PredictionController(object):
             return jsonify({"error": error_msg}), 404
         except Exception as e:
             return jsonify({"error": "An internal error occurred."}), 500
+    @staticmethod
+    def record_actual(prediction_id):
+        body = request.get_json(silent=True) or {}
+        if "actual" not in body:
+            return jsonify({"error": "actual is required"}), 400
+        row = db.session.query(PredictionSQL).filter_by(id=prediction_id).first()
+        if row is None:
+            return jsonify({"error": "Prediction not found"}), 404
+        row.actual_numeric = float(body["actual"])
+        db.session.commit()
+        prediction = Prediction.from_prediction_sql(prediction_id)
+        try:
+            arize_gateway.send_actual(prediction)
+        except Exception as error:
+            save_for_later("actual", prediction_id, str(error))
+            return jsonify({"id": prediction_id, "actual": float(body["actual"])}), 200
+        return jsonify({"id": prediction_id, "actual": float(body["actual"])}), 200
     # def get_prediction(prediction_id: str) -> tuple[dict, int]:
     def get_prediction(self, prediction_id: str) -> tuple[dict, int]:
         prediction = Prediction.from_prediction_sql(prediction_id)

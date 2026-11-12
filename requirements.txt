@@ -16,3 +16,7 @@ matplotlib
 plotly
 ipywidgets
 umap-learn[parametric_umap]
+python-dotenv
+celery
+redis
+gevent
