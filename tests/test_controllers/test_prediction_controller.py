@@ -123,3 +123,110 @@ def test_predict_logs_inference_to_arize(app, monkeypatch):
     assert response.status_code == 200
     assert len(calls) == 1
     assert calls[0].id == response.json["id"]
+
+
+def test_record_actual_logs_to_arize(app, monkeypatch):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    calls = []
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.arize_gateway.send_actual",
+        lambda prediction: calls.append(prediction),
+    )
+    response = app.test_client().post(
+        f"/prediction/{created.json['id']}/actual",
+        json={"actual": 4.5},
+    )
+    assert response.status_code == 200
+    assert response.json["actual"] == 4.5
+    assert len(calls) == 1
+    assert calls[0].actual_numeric == 4.5
+
+
+def test_record_actual_requires_a_value(app):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    response = app.test_client().post(
+        f"/prediction/{created.json['id']}/actual",
+        json={},
+    )
+    assert response.status_code == 400
+    assert response.json["error"] == "actual is required"
+
+
+def test_record_actual_unknown_prediction_returns_404(app):
+    response = app.test_client().post(
+        "/prediction/missing/actual",
+        json={"actual": 4.5},
+    )
+    assert response.status_code == 404
+
+
+def test_record_actual_keeps_success_when_arize_fails(app, monkeypatch):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    saved = []
+
+    def fail(prediction):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.arize_gateway.send_actual",
+        fail,
+    )
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.save_for_later",
+        lambda *args: saved.append(args),
+    )
+    response = app.test_client().post(
+        f"/prediction/{created.json['id']}/actual",
+        json={"actual": 4.5},
+    )
+    assert response.status_code == 200
+    assert saved[0][0] == "actual"
+
+
+def test_get_missing_prediction_returns_404(app, monkeypatch):
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.Prediction.from_prediction_sql",
+        lambda prediction_id: None,
+    )
+    response = app.test_client().get("/prediction/missing")
+    assert response.status_code == 404
+
+
+def test_unexpected_error_returns_500(app, monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.prediction_service.create_prediction",
+        boom,
+    )
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    assert response.status_code == 500
+
+
+def test_non_numeric_features_return_400(app):
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": [True, 41.0, 6.9, 1.0, 322.0, 2.5, 37.8, -122.2]},
+    )
+    assert response.status_code == 400
+
+
+def test_wrong_feature_count_returns_400(app):
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": [1.0, 2.0]},
+    )
+    assert response.status_code == 400
