@@ -11,3 +11,8 @@ coverage.xml
 .tox/
 instance/
 *.db
+mlartifacts/
+memo.py
+umap_embedding.py
+data5580_hw-26-homework-5/
+explains/
