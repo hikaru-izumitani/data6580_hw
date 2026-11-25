@@ -21,3 +21,8 @@ def get_user(id: str):
 @prediction_blueprint.route('/prediction/<prediction_id>/actual', methods=['POST'])
 def record_actual(prediction_id):
     return prediction_controller.record_actual(prediction_id)
+
+### add class
+@prediction_blueprint.route('/prediction/<prediction_id>/explain', methods=['POST'])
+def explain_prediction(prediction_id):
+    return prediction_controller.explain_prediction(prediction_id)
