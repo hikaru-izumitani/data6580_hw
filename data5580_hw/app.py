@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from data5580_hw.gateways import mlflow_gateway
 from data5580_hw.gateways.arize_gateway import arize_gateway
 from data5580_hw.routes import init_blueprints
+from data5580_hw.services.celery_init import celery_init_app
 from data5580_hw.services.database.database_client import init_db
 
 # $body = @{
@@ -25,6 +26,7 @@ def create_app():
     app.config.from_object(Config)
 
     init_db(app)
+    celery_init_app(app)
 
     @app.route('/')
     def index():
