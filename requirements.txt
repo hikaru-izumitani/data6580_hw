@@ -20,3 +20,5 @@ python-dotenv
 celery
 redis
 gevent
+openai
+openai-agents

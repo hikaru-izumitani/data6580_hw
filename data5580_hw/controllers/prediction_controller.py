@@ -84,6 +84,12 @@ class PredictionController(object):
             return jsonify({"error": "Prediction not found"}), 404
         return jsonify(prediction.to_dict()), 200
 
+    def get_explanations(self, prediction_id: str):
+        prediction = Prediction.from_prediction_sql(prediction_id)
+        if not prediction:
+            return jsonify({"error": "Prediction not found"}), 404
+        return jsonify(prediction.to_dict()), 200
+
     @staticmethod
     def get_task_status(task_id: str):
         from flask import current_app

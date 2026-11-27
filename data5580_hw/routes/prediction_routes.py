@@ -18,6 +18,11 @@ def create_prediction(model_name, model_version):
 def get_user(id: str):
     return prediction_controller.get_prediction(id)
 
+
+@prediction_blueprint.route('/prediction/<prediction_id>/explainer', methods=['GET'])
+def get_explanations(prediction_id):
+    return prediction_controller.get_explanations(prediction_id)
+
 @prediction_blueprint.route('/prediction/<prediction_id>/actual', methods=['POST'])
 def record_actual(prediction_id):
     return prediction_controller.record_actual(prediction_id)
