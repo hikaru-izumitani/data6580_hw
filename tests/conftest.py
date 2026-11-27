@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -6,6 +7,11 @@ import pytest
 
 from data5580_hw.config import Config
 import data5580_hw.gateways.mlflow_gateway as gw
+
+# GitHub Actions has no .env. The tests mock the Groq call, so a placeholder
+# is enough for the client to be constructed. A real key in the environment
+# or in data5580_hw/.env is left as-is.
+os.environ.setdefault("GROQ_API_KEY", "test-key")
 
 # Pytest has no Redis. Keep it off the database the running app uses.
 _test_db = Path(tempfile.mkdtemp()) / "test.db"
