@@ -1,4 +1,19 @@
+import logging
+
 from celery import Celery, Task
+from celery.signals import worker_ready, worker_shutdown
+
+logger = logging.getLogger(__name__)
+
+
+@worker_ready.connect
+def log_worker_ready(**kwargs):
+    logger.info("Celery worker started")
+
+
+@worker_shutdown.connect
+def log_worker_shutdown(**kwargs):
+    logger.info("Celery worker stopped")
 
 
 def celery_init_app(app):
@@ -13,7 +28,9 @@ def celery_init_app(app):
         app.import_name,
         task_cls=FlaskTask,
         include=[
-            "data5580_hw.services.embedding_service"
+            # "data5580_hw.services.embedding_service",
+            # "data5580_hw.services.explainer_service",
+            "data5580_hw.services.tasks",
         ]
     )
 

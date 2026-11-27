@@ -35,9 +35,14 @@ from data5580_hw.app import create_app
 def app():
     """FOR TESTING FIXTURE"""
     app = create_app()
+    # The workflow runs pytest without Redis or a Celery worker.
+    # Eager tasks run inside this process when delay() is called.
+    celery_app = app.extensions["celery"]
+    celery_app.conf.task_always_eager = True
+    celery_app.conf.task_eager_propagates = True
     app.config.update({
         "TESTING": True,
     })
-    
+
     with app.app_context():
         yield app

@@ -1,8 +1,14 @@
+# import json
+# import logging
+# from celery import shared_task
+# from data5580_hw.gateways import mlflow_gateway
+
 import numpy as np
 import pandas as pd
-from celery import shared_task
 
 from data5580_hw.models.prediction import Prediction, Shap
+
+# logger = logging.getLogger(__name__)
 
 
 class ExplainerService:
@@ -43,21 +49,14 @@ class ExplainerService:
         ]
         return prediction
 
-    @staticmethod
-    @shared_task(bind=True)
-    def generate_explanation(prediction_id: str) -> str:
-        from data5580_hw.services.database.database_client import db
-
-        prediction = Prediction.from_prediction_sql(prediction_id)
-
-        prediction = explainer_service.create_explanation(prediction)
-
-        explanation_sql = [this_shap_value.to_sql(prediction_id) for this_shap_value in prediction.shap_values]
-
-        db.session.add_all(explanation_sql)
-        db.session.commit()
-
-        return prediction_id
+    # @staticmethod
+    # @shared_task(
+    #     autoretry_for=(Exception,),
+    #     retry_backoff=True,
+    #     retry_kwargs={"max_retries": 3},
+    # )
+    # def generate_explanation(prediction_id: str) -> str:
+    #     Moved to data5580_hw.services.tasks.generate_explanation.
 
 
 def _one_row(raw, n_features: int) -> np.ndarray:

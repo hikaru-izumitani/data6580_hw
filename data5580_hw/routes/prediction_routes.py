@@ -21,3 +21,8 @@ def get_user(id: str):
 @prediction_blueprint.route('/prediction/<prediction_id>/actual', methods=['POST'])
 def record_actual(prediction_id):
     return prediction_controller.record_actual(prediction_id)
+
+
+@prediction_blueprint.route('/tasks/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    return prediction_controller.get_task_status(task_id)

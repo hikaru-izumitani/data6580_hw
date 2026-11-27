@@ -59,6 +59,20 @@ class Shap:
             shap_values=json.loads(shap_sql.shap_values),
         )
 
+
+@dataclass
+class TaskStatus:
+    task_id: str
+    state: str
+    status: Optional[str] = None
+    result: Optional[str] = None
+    error: Optional[str] = None
+    progress: Optional[dict] = None
+
+    def to_dict(self) -> dict:
+        return {key: value for key, value in asdict(self).items() if value is not None}
+
+
 @dataclass
 class Model(object):
     name: str

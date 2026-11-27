@@ -1,5 +1,6 @@
 from asyncio.log import logger
 from typing import Dict
+import json
 import logging
 
 from flask import current_app, has_app_context
@@ -11,9 +12,10 @@ from data5580_hw.gateways import mlflow_gateway
 from data5580_hw.gateways.arize_gateway import arize_gateway, save_for_later
 from data5580_hw.models.prediction import Prediction, Model
 from data5580_hw.services.database.prediction_sql import PredictionSQL
-from data5580_hw.services.embedding_service import embedding_service
-from data5580_hw.services.explainer_service import explainer_service
+# from data5580_hw.services.embedding_service import embedding_service
+# from data5580_hw.services.explainer_service import explainer_service
 from data5580_hw.services.inference_service import inference_service
+from data5580_hw.services.tasks import generate_embedding, generate_explanation
 from data5580_hw.services.database.database_client import db
 
 logger = logging.getLogger(__name__)
@@ -22,7 +24,8 @@ logger = logging.getLogger(__name__)
 class PredictionService(object):
     def __init__app__(self,app):
         ...
-    def create_prediction(self, model_name: str, model_version: str, prediction: Prediction) -> Prediction:
+    # def create_prediction(self, model_name: str, model_version: str, prediction: Prediction) -> Prediction:
+    def create_prediction(self, model_name: str, model_version: str, prediction: Prediction, block: bool = True) -> Prediction:
         #model = Model(
             #name=model_name,
             #version=model_version
@@ -41,20 +44,20 @@ class PredictionService(object):
         original_features = prediction.features
         prediction.features = _features_frame(original_features, model._model)
         prediction = inference_service.create_inference(prediction)
-        if prediction.model._explainer:
-            prediction = explainer_service.create_explanation(prediction)
-        else:
-            raise ValueError(
-                "SHAP computation failed: explainer is not configured for "
-                f"model '{model_name}' version '{model_version}'"
-            )
-        if prediction.model._embedding:
-            prediction = embedding_service.create_embedding(prediction)
-        else:
-            raise ValueError(
-                "UMAP computation failed: embedding model is not configured for "
-                f"model '{model_name}' version '{model_version}'"
-            )
+        # if prediction.model._explainer:
+        #     prediction = explainer_service.create_explanation(prediction)
+        # else:
+        #     raise ValueError(
+        #         "SHAP computation failed: explainer is not configured for "
+        #         f"model '{model_name}' version '{model_version}'"
+        #     )
+        # if prediction.model._embedding:
+        #     prediction = embedding_service.create_embedding(prediction)
+        # else:
+        #     raise ValueError(
+        #         "UMAP computation failed: embedding model is not configured for "
+        #         f"model '{model_name}' version '{model_version}'"
+        #     )
         prediction.features = original_features
 
         model_sql = model.to_sql()
@@ -65,8 +68,41 @@ class PredictionService(object):
         except IntegrityError as e:
             logger.error(str(e))
             raise e
+
+        if prediction.model._explainer:
+            # explainer_result = explainer_service.generate_explanation.delay(prediction_sql.id)
+            explainer_result = generate_explanation.delay(prediction_sql.id)
+        else:
+            raise ValueError(
+                "SHAP computation failed: explainer is not configured for "
+                f"model '{model_name}' version '{model_version}'"
+            )
+        if prediction.model._embedding:
+            # embedding_result = embedding_service.generate_embedding.delay(prediction_sql.id)
+            embedding_result = generate_embedding.delay(prediction_sql.id)
+        else:
+            raise ValueError(
+                "UMAP computation failed: embedding model is not configured for "
+                f"model '{model_name}' version '{model_version}'"
+            )
+
+        # explainer_result.get()
+        # embedding_result.get()
+        # prediction = Prediction.from_prediction_sql(prediction_sql.id)
+        # if isinstance(prediction.features, str):
+        #     prediction.features = json.loads(prediction.features)
+        # _log_to_arize(prediction)
+        if block:
+            explainer_result.get()
+            embedding_result.get()
+            prediction = Prediction.from_prediction_sql(prediction_sql.id)
+            if isinstance(prediction.features, str):
+                prediction.features = json.loads(prediction.features)
         _log_to_arize(prediction)
-        prediction = Prediction.from_prediction_sql(prediction_sql.id)
+        prediction.tasks = {
+            "explanation_task_id": explainer_result.id,
+            "embedding_task_id": embedding_result.id,
+        }
         #user_sql = db.session.query(PredictionSQL).filter_by(id=prediction.id).first()
         logger.info(f"Created prediction: {prediction.id} for {prediction.model.name} {prediction.model.version}."
         f"features={original_features} label={prediction.label_numeric}")

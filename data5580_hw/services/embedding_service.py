@@ -1,6 +1,12 @@
-from celery import shared_task
+# import json
+# import logging
+# import pandas as pd
+# from celery import shared_task
+# from data5580_hw.gateways import mlflow_gateway
 
 from data5580_hw.models.prediction import Embedding, Prediction
+
+# logger = logging.getLogger(__name__)
 
 
 class EmbeddingService:
@@ -26,23 +32,16 @@ class EmbeddingService:
         prediction.embedding_values = Embedding(embeddings=values)
         return prediction
 
-    @staticmethod
-    @shared_task(bind=True)
-    def generate_embedding(prediction_id: str) -> str:
-        from data5580_hw.services.database.database_client import db
-
-        prediction = Prediction.from_prediction_sql(prediction_id)
-
-        # Perform embedding
-        prediction = embedding_service.create_embedding(prediction)
-
-        # Persist embedding
-        embedding_sql = prediction.embedding_values.to_sql(prediction_id)
-
-        db.session.add(embedding_sql)
-        db.session.commit()
-
-        return prediction_id
+    # @staticmethod
+    # @shared_task(
+    #     autoretry_for=(Exception,),
+    #     retry_backoff=True,
+    #     retry_kwargs={"max_retries": 3},
+    #     soft_time_limit=60,
+    #     time_limit=90,
+    # )
+    # def generate_embedding(prediction_id: str) -> str:
+    #     Moved to data5580_hw.services.tasks.generate_embedding.
 
 
 embedding_service: EmbeddingService = EmbeddingService()

@@ -12,8 +12,8 @@ class Config:
     # In-file sqlite database
     SQLALCHEMY_DATABASE_URI = 'sqlite:///data.db'
 
-    CELERY_BROKER_URL = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
 
     # In memory database
     # SQLALCHEMY_DATABASE_URI = ':memory:///data.db'

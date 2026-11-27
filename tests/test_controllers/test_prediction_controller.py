@@ -20,6 +20,44 @@ def test_predict_returns_label(app):
         "Longitude",
     }
 
+def test_predict_without_blocking_returns_task_ids(app):
+    response = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES, "block": False},
+    )
+    assert response.status_code == 202
+    assert response.json["tasks"]["explanation_task_id"]
+    assert response.json["tasks"]["embedding_task_id"]
+
+
+def test_task_status_reports_celery_state(app):
+    class Result:
+        def __init__(self, state, info):
+            self.state = state
+            self.info = info
+
+    class FakeCelery:
+        def __init__(self, state, info):
+            self._state = state
+            self._info = info
+
+        def AsyncResult(self, task_id):
+            assert task_id == "task-1"
+            return Result(self._state, self._info)
+
+    cases = [
+        ("PENDING", None, 200, {"task_id": "task-1", "state": "PENDING", "status": "Pending..."}),
+        ("STARTED", None, 200, {"task_id": "task-1", "state": "STARTED", "status": "Started..."}),
+        ("SUCCESS", "prediction-id", 200, {"task_id": "task-1", "state": "SUCCESS", "result": "prediction-id"}),
+        ("FAILURE", "boom", 500, {"task_id": "task-1", "state": "FAILURE", "error": "boom"}),
+    ]
+    for state, info, code, body in cases:
+        app.extensions["celery"] = FakeCelery(state, info)
+        status = app.test_client().get("/tasks/task-1")
+        assert status.status_code == code
+        assert status.json == body
+
+
 def test_predict_missing_features_returns_400(app):
     response = app.test_client().post(
         "/v1/california-housing/version/5/predict",
@@ -67,7 +105,7 @@ def test_shap_failure_returns_400(app, monkeypatch):
         raise ValueError("SHAP computation failed: unsupported model type")
 
     monkeypatch.setattr(
-        "data5580_hw.services.prediction_service.explainer_service.create_explanation",
+        "data5580_hw.services.tasks.explainer_service.create_explanation",
         fail,
     )
     response = app.test_client().post(
@@ -94,7 +132,7 @@ def test_umap_failure_returns_400(app, monkeypatch):
         raise ValueError("UMAP computation failed: invalid input data")
 
     monkeypatch.setattr(
-        "data5580_hw.services.prediction_service.embedding_service.create_embedding",
+        "data5580_hw.services.tasks.embedding_service.create_embedding",
         fail,
     )
     response = app.test_client().post(

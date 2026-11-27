@@ -3,7 +3,7 @@ from dataclasses import asdict
 
 from flask import jsonify, request
 
-from data5580_hw.models.prediction import Prediction
+from data5580_hw.models.prediction import Prediction, TaskStatus
 from data5580_hw.services.database.database_client import db
 from data5580_hw.services.prediction_service import prediction_service
 from data5580_hw.services.database.prediction_sql import PredictionSQL
@@ -32,15 +32,27 @@ class PredictionController(object):
                 features=features,
             )
             #prediction = prediction_service.create_service(prediction=prediction)
+            # prediction = prediction_service.create_prediction(
+            #     model_name=model_name,
+            #     model_version=model_version,
+            #     prediction=prediction)
+            block = request_data.get("block", True)
+            if isinstance(block, str):
+                block = block.strip().lower() not in {"false", "0", "no"}
             prediction = prediction_service.create_prediction(
                 model_name=model_name,
                 model_version=model_version,
-                prediction=prediction)
+                prediction=prediction,
+                block=bool(block),
+            )
             # return jsonify(prediction.to_dict()), 200
             body = prediction.to_dict()
             if prediction.label_numeric is not None:
                 body["label"] = float(prediction.label_numeric)
-            return jsonify(body), 200
+            tasks = getattr(prediction, "tasks", None)
+            if tasks:
+                body["tasks"] = tasks
+            return jsonify(body), 200 if block else 202
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         except (KeyError, FileNotFoundError, LookupError) as e:
@@ -71,6 +83,41 @@ class PredictionController(object):
         if not prediction:
             return jsonify({"error": "Prediction not found"}), 404
         return jsonify(prediction.to_dict()), 200
+
+    @staticmethod
+    def get_task_status(task_id: str):
+        from flask import current_app
+
+        # result = current_app.extensions["celery"].AsyncResult(task_id)
+        # error = str(result.result) if result.state == "FAILURE" else None
+        # task_result = result.result if result.state == "SUCCESS" else None
+        # status = TaskStatus(
+        #     task_id=task_id,
+        #     state=result.state,
+        #     result=None if task_result is None else str(task_result),
+        #     error=error,
+        # )
+        # return jsonify(status.to_dict()), 200
+        task = current_app.extensions["celery"].AsyncResult(task_id)
+        if task.state == "PENDING":
+            status = TaskStatus(task_id=task_id, state="PENDING", status="Pending...")
+            return jsonify(status.to_dict()), 200
+        elif task.state == "STARTED":
+            status = TaskStatus(task_id=task_id, state="STARTED", status="Started...")
+            return jsonify(status.to_dict()), 200
+        elif task.state == "PROGRESS":
+            status = TaskStatus(task_id=task_id, state="PROGRESS", progress=task.info)
+            return jsonify(status.to_dict()), 200
+        elif task.state == "SUCCESS":
+            status = TaskStatus(task_id=task_id, state="SUCCESS", result=str(task.info))
+            return jsonify(status.to_dict()), 200
+        elif task.state == "FAILURE":
+            status = TaskStatus(task_id=task_id, state="FAILURE", error=str(task.info))
+            return jsonify(status.to_dict()), 500
+        else:
+            # RETRY
+            status = TaskStatus(task_id=task_id, state=task.state, error=str(task.info))
+            return jsonify(status.to_dict()), 500
     @classmethod
     def get_prediction_sql(cls, id_: str) -> 'PredictionSQL':
         return db.session.query(PredictionSQL).filter_by(id=id_).first()
