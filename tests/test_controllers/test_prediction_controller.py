@@ -26,8 +26,28 @@ def test_predict_without_blocking_returns_task_ids(app):
         json={"features": FEATURES, "block": False},
     )
     assert response.status_code == 202
+    assert response.json["shap_values"] == {}
+    assert response.json["embeddings"] is None
     assert response.json["tasks"]["explanation_task_id"]
     assert response.json["tasks"]["embedding_task_id"]
+
+
+def test_finished_tasks_are_visible_on_the_prediction(app):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES, "block": False},
+    )
+    assert created.status_code == 202
+    stored = app.test_client().get(f"/prediction/{created.json['id']}")
+    assert stored.status_code == 200
+    assert stored.json["shap_values"]["MedInc"] == 0.4
+    assert stored.json["shap_values"]["Latitude"] == -0.2
+    assert stored.json["embeddings"] == {
+        "kind": "inputs",
+        "x": 0.24,
+        "y": -0.38,
+        "z": 0.4,
+    }
 
 
 def test_task_status_reports_celery_state(app):

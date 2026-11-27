@@ -10,7 +10,11 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 class Config:
 
     # In-file sqlite database
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///data.db'
+    # SQLALCHEMY_DATABASE_URI = 'sqlite:///data.db'
+    # Flask and the Celery worker resolve a relative path from different
+    # instance folders, so both must use this absolute file.
+    _DB_PATH = Path(__file__).resolve().parent.parent / "instance" / "data.db"
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{_DB_PATH}"
 
     CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
     CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")

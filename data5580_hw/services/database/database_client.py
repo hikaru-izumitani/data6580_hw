@@ -9,17 +9,24 @@ class BaseModel(DeclarativeBase):
 db = SQLAlchemy(model_class=BaseModel)
 
 
-def init_db(app) -> None:
+def init_db(app, reset: bool = True) -> None:
     import data5580_hw.services.database.user_sql
     import data5580_hw.services.database.prediction_sql
 
     db.init_app(app)
 
     with app.app_context():
-        try:
-            db.drop_all()
-        except:
-            pass
-        finally:
-            db.create_all()
-            db.session.commit()
+        # try:
+        #     db.drop_all()
+        # except:
+        #     pass
+        # finally:
+        #     db.create_all()
+        #     db.session.commit()
+        if reset:
+            try:
+                db.drop_all()
+            except:
+                pass
+        db.create_all()
+        db.session.commit()

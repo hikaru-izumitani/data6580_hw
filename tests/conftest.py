@@ -1,8 +1,15 @@
+import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
+from data5580_hw.config import Config
 import data5580_hw.gateways.mlflow_gateway as gw
+
+# Pytest has no Redis. Keep it off the database the running app uses.
+_test_db = Path(tempfile.mkdtemp()) / "test.db"
+Config.SQLALCHEMY_DATABASE_URI = f"sqlite:///{_test_db}"
 
 # create_app() loads the model from localhost:8080.
 # Tests replace that load with a fake model first.

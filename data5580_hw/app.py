@@ -17,7 +17,7 @@ from data5580_hw.services.database.database_client import init_db
 #     -ContentType "application/json" `
 #     -Body $body
 
-def create_app():
+def create_app(reset_db: bool = True):
     app = Flask(__name__)
 
     from data5580_hw.config import Config
@@ -25,7 +25,7 @@ def create_app():
 
     app.config.from_object(Config)
 
-    init_db(app)
+    init_db(app, reset=reset_db)
     celery_init_app(app)
 
     @app.route('/')
