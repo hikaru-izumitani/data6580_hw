@@ -282,6 +282,67 @@ def test_non_numeric_features_return_400(app):
     assert response.status_code == 400
 
 
+def test_explainer_adds_summary(app, monkeypatch):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.llm_gateway.generate_explanation",
+        lambda prediction: "Median income raises the predicted price.",
+    )
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.embedding_service.nearest_predictions",
+        lambda prediction: [{"id": "other", "similarity": 0.9}],
+    )
+    response = app.test_client().get(f"/prediction/{created.json['id']}/explainer")
+    assert response.status_code == 200
+    assert response.json["label"] == created.json["label"]
+    assert response.json["summary"] == "Median income raises the predicted price."
+
+
+def test_explainer_reports_when_no_neighbors_exist(app, monkeypatch):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.llm_gateway.generate_explanation",
+        lambda prediction: "The predicted price is 1.5.",
+    )
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.embedding_service.nearest_predictions",
+        lambda prediction: [],
+    )
+    response = app.test_client().get(f"/prediction/{created.json['id']}/explainer")
+    assert response.status_code == 200
+    assert "No relevant predictions were found for comparison." in response.json["summary"]
+
+
+def test_explainer_returns_a_friendly_error_when_the_model_call_fails(app, monkeypatch):
+    created = app.test_client().post(
+        "/v1/california-housing/version/5/predict",
+        json={"features": FEATURES},
+    )
+
+    def fail(prediction):
+        raise RuntimeError("The explanation could not be generated. Please try again.")
+
+    monkeypatch.setattr(
+        "data5580_hw.controllers.prediction_controller.llm_gateway.generate_explanation",
+        fail,
+    )
+    response = app.test_client().get(f"/prediction/{created.json['id']}/explainer")
+    assert response.status_code == 502
+    assert response.json["error"] == "The explanation could not be generated. Please try again."
+
+
+def test_explainer_missing_prediction_returns_404(app):
+    response = app.test_client().get("/prediction/missing/explainer")
+    assert response.status_code == 404
+    assert response.json["error"] == "Prediction not found"
+
+
 def test_wrong_feature_count_returns_400(app):
     response = app.test_client().post(
         "/v1/california-housing/version/5/predict",

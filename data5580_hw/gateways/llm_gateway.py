@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 
@@ -9,6 +10,9 @@ from agents import (
 )
 
 from data5580_hw.models.prediction import Prediction
+from data5580_hw.services.embedding_service import embedding_service
+
+EXPLANATION_TIMEOUT_SECONDS = 30
 
 
 class LLMGateway:
@@ -49,9 +53,14 @@ class LLMGateway:
                 f"Set the API key for {self.LLM_PROVIDER} before running."
             )
 
+        # llm_client = AsyncOpenAI(
+        #     api_key=config["api_key"],
+        #     base_url=config["base_url"],
+        # )
         llm_client = AsyncOpenAI(
             api_key=config["api_key"],
             base_url=config["base_url"],
+            timeout=EXPLANATION_TIMEOUT_SECONDS,
         )
 
         self.agent_model = OpenAIChatCompletionsModel(
@@ -158,7 +167,7 @@ class LLMGateway:
 
         return result.final_output
 
-    def generate_explanation(self, prediction: Prediction) -> Prediction:
+    def generate_explanation(self, prediction: Prediction) -> str:
 
         explanation_agent = Agent(
             name="ML Explainability Agent",
@@ -168,17 +177,65 @@ class LLMGateway:
             instructions=self._get_super_prompt(),
         )
 
-        explanation = self.explain_prediction(
-            prediction=prediction,
-            shap_values=shap_values,
-            similar_observations=similar_observations,
-        )
+        # explanation = self.explain_prediction(
+        #     prediction=prediction,
+        #     shap_values=shap_values,
+        #     similar_observations=similar_observations,
+        # )
+        #
+        # print(explanation)
+        #
+        # return prediction
 
-        print(explanation)
+        shap_values = _shap_values(prediction)
+        similar_observations = embedding_service.nearest_predictions(prediction)
+        try:
+            explanation = asyncio.run(
+                self.explain_prediction(
+                    explanation_agent,
+                    _prediction_input(prediction),
+                    shap_values,
+                    similar_observations,
+                )
+            )
+        except Exception as error:
+            raise RuntimeError(
+                "The explanation could not be generated. Please try again."
+            ) from error
+        return explanation
 
 
+def _prediction_input(prediction: Prediction) -> dict:
+    features = prediction.features
+    if isinstance(features, str):
+        features = _json_value(features)
+    label = prediction.label_str if prediction.label_str is not None else prediction.label_numeric
+    if label is not None and not isinstance(label, str):
+        label = float(label)
+    score = float(prediction.score) if prediction.score is not None else None
+    return {
+        "id": prediction.id,
+        "features": features,
+        "label": label,
+        "score": score,
+    }
 
-        return prediction
+
+def _shap_values(prediction: Prediction) -> dict:
+    values = prediction.shap_values or []
+    if not values:
+        return {}
+    raw = getattr(values[0], "shap_values", {}) or {}
+    if isinstance(raw, str):
+        raw = _json_value(raw)
+    return raw if isinstance(raw, dict) else {}
+
+
+def _json_value(value):
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
 
 
 llm_gateway = LLMGateway()

@@ -13,6 +13,8 @@ import json
 
 from data5580_hw.gateways import mlflow_gateway
 from data5580_hw.gateways.arize_gateway import arize_gateway, save_for_later
+from data5580_hw.gateways.llm_gateway import llm_gateway
+from data5580_hw.services.embedding_service import embedding_service
 
 #gateway
 
@@ -85,10 +87,22 @@ class PredictionController(object):
         return jsonify(prediction.to_dict()), 200
 
     def get_explanations(self, prediction_id: str):
-        prediction = Prediction.from_prediction_sql(prediction_id)
-        if not prediction:
+        row = db.session.query(PredictionSQL).filter_by(id=prediction_id).first()
+        if row is None:
             return jsonify({"error": "Prediction not found"}), 404
-        return jsonify(prediction.to_dict()), 200
+        prediction = Prediction.from_prediction_sql(prediction_id)
+        # if not prediction:
+        #     return jsonify({"error": "Prediction not found"}), 404
+        # return jsonify(prediction.to_dict()), 200
+        try:
+            summary = llm_gateway.generate_explanation(prediction)
+        except RuntimeError as error:
+            return jsonify({"error": str(error)}), 502
+        if not embedding_service.nearest_predictions(prediction):
+            summary = f"{summary}\n\nNo relevant predictions were found for comparison."
+        body = prediction.to_dict()
+        body["summary"] = summary
+        return jsonify(body), 200
 
     @staticmethod
     def get_task_status(task_id: str):
